@@ -1,15 +1,16 @@
+
 let ws;
 
 let systemId = null;
 
 function getWebSocketURL() {
   const protocol = 'wss://';
-  const host = cloudvar.psannetwork.net;
+  const host = 'cloudvar.psannetwork.net';
   return `${protocol}${host}`;
 }
 
 function serverInit(initialSystemId) {
-  const wsURL = getWebSocketURL(); // URLを動的に取得
+  const wsURL = getWebSocketURL(); 
   ws = new WebSocket(wsURL);
 
   ws.onopen = () => {
@@ -79,3 +80,4 @@ function sendMessage(message1, message2) {
 //const initialSystemId = 'system123';  
 //serverInit(initialSystemId);
 //sendMessage("a", "a")
+  

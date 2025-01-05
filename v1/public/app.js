@@ -2,8 +2,16 @@ let ws;
 
 let systemId = null;
 
+function getWebSocketURL() {
+  const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+  const host = window.location.hostname;
+  const port = '5032'; // 必要に応じてポートを変更
+  return `${protocol}${host}:${port}`;
+}
+
 function serverInit(initialSystemId) {
-  ws = new WebSocket('ws://localhost:5032');
+  const wsURL = getWebSocketURL(); 
+  ws = new WebSocket(wsURL);
 
   ws.onopen = () => {
     console.log('Connected to server');

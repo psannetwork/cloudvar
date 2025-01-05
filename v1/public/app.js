@@ -4,7 +4,7 @@ let systemId = null;
 
 function getWebSocketURL() {
   const protocol = 'wss://';
-  const host = window.location.hostname;
+  const host = cloudvar.psannetwork.net;
   return `${protocol}${host}`;
 }
 

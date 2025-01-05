@@ -1,5 +1,3 @@
-//const initialSystemId = 'system123';  
-//serverInit(initialSystemId);
 **CloudVar**
 
 **クラウド変数を簡単に設定できる**

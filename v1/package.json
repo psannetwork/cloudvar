@@ -4,7 +4,7 @@
   "description": "An Express server integrated with WebSocket for real-time communication.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node server.js"
   },
   "author": "Psan",
   "license": "MIT",

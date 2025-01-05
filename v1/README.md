@@ -5,6 +5,7 @@
 ## セットアップ
 
 1. 以下のファイルをダウンロードし、自分のプロジェクトにファイルを配置
+https://raw.githubusercontent.com/hirotomoki12345/chrome/refs/heads/main/script/cloudvar.js
 2. 配置したファイルを読み込む ex)
 ```html <script src='cloudvar.js'></script>```
 

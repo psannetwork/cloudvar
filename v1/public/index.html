@@ -5,7 +5,7 @@ let systemId = null;
 
 function getWebSocketURL() {
   const protocol = 'wss://';
-  const host = window.location.hostname;
+  const host = cloudvar.psannetwork.net;
   return `${protocol}${host}`;
 }
 
@@ -80,5 +80,5 @@ function sendMessage(message1, message2) {
 //const initialSystemId = 'system123';  
 //serverInit(initialSystemId);
 //sendMessage("a", "a")
-  
+
 </script>

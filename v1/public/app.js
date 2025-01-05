@@ -2,11 +2,18 @@ let ws;
 
 let systemId = null;
 
+function getWebSocketURL() {
+  const protocol = 'wss://';
+  const host = window.location.hostname;
+  return `${protocol}${host}`;
+}
+
 function serverInit(initialSystemId) {
-  ws = new WebSocket('wss://cloudvar.psannetwork.net');
+  const wsURL = getWebSocketURL(); // URLを動的に取得
+  ws = new WebSocket(wsURL);
 
   ws.onopen = () => {
-    console.log('Connected to server');
+    console.log('Connected to server:', wsURL);
     
     if (initialSystemId) {
       systemId = initialSystemId;  
@@ -24,7 +31,6 @@ function serverInit(initialSystemId) {
       eval(`window.${data1} = "${data2}"`);
     }
   };
-  
 
   ws.onerror = (error) => {
     console.error('WebSocket error:', error);

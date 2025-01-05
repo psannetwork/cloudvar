@@ -2,19 +2,11 @@ let ws;
 
 let systemId = null;
 
-function getWebSocketURL() {
-  const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-  const host = window.location.hostname;
-  const port = '5032'; // 必要に応じてポートを変更
-  return `${protocol}${host}:${port}`;
-}
-
 function serverInit(initialSystemId) {
-  const wsURL = getWebSocketURL(); // URLを動的に取得
-  ws = new WebSocket(wsURL);
+  ws = new WebSocket('ws://localhost:5032');
 
   ws.onopen = () => {
-    console.log('Connected to server:', wsURL);
+    console.log('Connected to server');
     
     if (initialSystemId) {
       systemId = initialSystemId;  
@@ -32,6 +24,7 @@ function serverInit(initialSystemId) {
       eval(`window.${data1} = "${data2}"`);
     }
   };
+  
 
   ws.onerror = (error) => {
     console.error('WebSocket error:', error);

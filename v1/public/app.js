@@ -10,11 +10,11 @@ function getWebSocketURL() {
 }
 
 function serverInit(initialSystemId) {
-  const wsURL = getWebSocketURL(); 
+  const wsURL = getWebSocketURL(); // URLを動的に取得
   ws = new WebSocket(wsURL);
 
   ws.onopen = () => {
-    console.log('Connected to server');
+    console.log('Connected to server:', wsURL);
     
     if (initialSystemId) {
       systemId = initialSystemId;  
@@ -32,7 +32,6 @@ function serverInit(initialSystemId) {
       eval(`window.${data1} = "${data2}"`);
     }
   };
-  
 
   ws.onerror = (error) => {
     console.error('WebSocket error:', error);

@@ -3,7 +3,7 @@ let ws;
 let systemId = null;
 
 function serverInit(initialSystemId) {
-  ws = new WebSocket('ws://localhost:5032');
+  ws = new WebSocket('wss://cloudvar.psannetwork.net');
 
   ws.onopen = () => {
     console.log('Connected to server');

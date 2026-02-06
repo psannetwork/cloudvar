@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>CloudVar Room Manager</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background: #f0f0f0; }
+        .setup, .app { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-top: 50px; }
+        .hidden { display: none; }
+        input { margin: 5px; padding: 8px; }
+    </style>
+</head>
+<body>
+    <div id="setup-ui" class="setup">
+        <h2>Enter Room</h2>
+        <input type="text" id="room-id" placeholder="Room Name (e.g. MyGame)">
+        <input type="password" id="room-pass" placeholder="Password (Optional)">
+        <button onclick="enterRoom()">Join Room</button>
+    </div>
+
+    <div id="app-ui" class="app hidden">
+        <h3>Room: <span id="current-room"></span></h3>
+        <p>My ID: <span id="my-id"></span></p>
+        <hr>
+        <h1>Score: <span id="score-val">0</span></h1>
+        <button onclick="score++">Score++</button>
+        <button onclick="location.reload()">Leave Room</button>
+    </div>
+
+    <script src="../src/client.js"></script>
+    <script>
+        const cv = new CloudVar('ws://localhost:8080');
+
+        function enterRoom() {
+            const rid = document.getElementById('room-id').value;
+            const rpass = document.getElementById('room-pass').value;
+            if (!rid) return alert("Room ID is required");
+
+            cv.join(rid, rpass);
+        }
+
+        cv.onChange('_joined', (roomId) => {
+            document.getElementById('setup-ui').classList.add('hidden');
+            document.getElementById('app-ui').classList.remove('hidden');
+            document.getElementById('current-room').innerText = roomId;
+            document.getElementById('my-id').innerText = cv.id;
+            
+            // クラウド変数の初期化
+            score = score || 0;
+        });
+
+        cv.onChange('score', val => {
+            document.getElementById('score-val').innerText = val;
+        });
+    </script>
+</body>
+</html>

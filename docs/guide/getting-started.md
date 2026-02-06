@@ -18,14 +18,14 @@ npm start
 ```
 
 ## 2. クライアントの実装
-`src/client.bundle.js` をHTMLで読み込むだけで、魔法のような同期が始まります。
+ビルドされた `dist/cloudvar.js` をHTMLで読み込むだけで、魔法のような同期が始まります。
 
 ### HTML (index.html)
 表示したい部分に `cv-bind` 属性を付けるだけ。JSで表示を書き換えるコードは不要です。
 
 ```html
-<!-- バンドル版を読み込む -->
-<script src="src/client.bundle.js"></script>
+<!-- SDKを読み込む -->
+<script src="dist/cloudvar.js"></script>
 
 <!-- 表示用 -->
 <h1>Score: <span cv-bind="score">0</span></h1>

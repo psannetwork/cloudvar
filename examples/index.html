@@ -38,8 +38,8 @@
         </button>
     </div>
 
-    <!-- バンドル版を読み込む -->
-    <script src="../src/client.bundle.js"></script>
+    <!-- ビルドされたSDKを読み込む -->
+    <script src="../dist/cloudvar.js"></script>
     <script>
         // 設定のみ。ロジックはHTMLに全て移動！
         const cv = new CloudVar('ws://localhost:5032', { room: 'logic-demo' });

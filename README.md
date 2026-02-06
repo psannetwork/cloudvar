@@ -2,37 +2,28 @@
 
 世界で最も簡単に、HTMLと変数をリアルタイム同期させる。
 
-## 究極の「2行」導入
-```html
-<!-- 1. HTMLに書く -->
-Score: <span cv-bind="score">0</span>
+## 🪄 マジック属性で「JSを書かない」開発
+HTMLに属性を書くだけで、リアルタイムアプリが完成します。
 
-<!-- 2. JSで代入する -->
-<script src="src/client.js"></script>
-<script>
-    const cv = new CloudVar('ws://localhost:8080', { room: 'game' });
-    score = 100; // これだけでHTMLが書き換わり、世界に同期される
-</script>
+```html
+<!-- 1. 表示を同期 -->
+Score: <h1 cv-bind="score">0</h1>
+
+<!-- 2. クリックで加算 (JS不要！) -->
+<button cv-on="click: score++">加点</button>
+
+<!-- 3. 変数で表示を切り替え -->
+<div cv-show="isGameover">GAME OVER</div>
 ```
 
 ## 特徴
-- 🪄 **オートバインド**: HTML属性 `cv-bind` で表示を自動更新。
+- ✨ **マジック属性**: `cv-bind`, `cv-on`, `cv-show`, `cv-class` でHTMLを動的に。
 - ⚡ **ノンブロッキング**: 接続完了を待たずに即代入OK。
 - 🏠 **ルーム管理**: パスワード付きルームで安全に分離。
 - 🏎️ **P2P対応**: WebRTCによる極限の低遅延。
 
-## インストール
-```bash
-git clone https://github.com/psannetwork/cloudvar.git
-cd cloudvar
-npm install
-npm start
-```
-
-## ドキュメント
-詳細な使い方は **[docsディレクトリ](./docs/README.md)** をご覧ください。
-
-- **[5分で導入ガイド (オートバインド編)](./docs/guide/getting-started.md)**
-- **[APIリファレンス](./docs/api/client-sdk.md)**
-- **[オートバインドの仕組み](./docs/guide/auto-bind.md)**
+## クイックリンク
+- **[5分で導入ガイド (マジック属性編)](./docs/guide/getting-started.md)**
+- **[マジック属性 リファレンス](./docs/guide/auto-bind.md)**
+- **[API詳細 (JavaScript)](./docs/api/client-sdk.md)**
 - **[サーバー設定](./docs/api/server-config.md)**

@@ -2,37 +2,51 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>CloudVar Zero-Code Sync</title>
+    <title>CloudVar Logic Demo</title>
     <style>
-        body { font-family: sans-serif; padding: 40px; text-align: center; background: #fafafa; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: inline-block; }
-        h1 { font-size: 5em; margin: 10px 0; color: #3b82f6; }
-        input { padding: 10px; font-size: 1.2em; border-radius: 8px; border: 1px solid #ddd; }
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f0f4f8; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto; }
+        .btn { padding: 10px 20px; font-size: 1.2em; cursor: pointer; border: none; border-radius: 5px; background: #ddd; }
+        .btn.active { background: #3b82f6; color: white; }
+        .danger { color: red; font-weight: bold; }
     </style>
 </head>
 <body>
+
     <div class="card">
-        <p>☁️ CloudVar: <b>score</b></p>
-        <!-- 🌟 cv-bind を書くだけ。JSでの更新処理は不要！ -->
-        <h1 cv-bind="score">0</h1>
+        <h2>クラウド・クリッカー</h2>
         
-        <button onclick="score++" style="font-size: 1.5em; padding: 10px 20px;">+1</button>
+        <!-- cv-bind: スコア表示 -->
+        <h1><span cv-bind="score">0</span></h1>
+
+        <!-- cv-on: クリックで加算 (JS不要！) -->
+        <button class="btn" cv-on="click: score++">押す！</button>
         
         <hr>
-        <p>名前を同期（双方向バインディング）</p>
-        <!-- 🌟 inputに書けば、入力するだけで変数も変わり、全員に同期される -->
-        <input type="text" cv-bind="username" placeholder="名前を入力...">
-        <p>こんにちは、<span cv-bind="username">誰か</span>さん！</p>
+
+        <!-- cv-show: スコア10以上で表示 -->
+        <!-- 注意: 現在の簡易版では変数の真偽値のみ。比較演算は将来拡張予定 -->
+        <!-- ここではデモ用に isHigh を使う -->
+        <div cv-show="isHigh">
+            <p class="danger">ハイスコアモード突入！</p>
+        </div>
+
+        <button class="btn" 
+            cv-class="isHigh: active" 
+            cv-on="click: !isHigh">
+            モード切替 (cv-class & cv-on)
+        </button>
     </div>
 
-    <!-- バンドル版を1つ読み込むだけ -->
+    <!-- バンドル版を読み込む -->
     <script src="../src/client.bundle.js"></script>
     <script>
-        // JSはこれだけ。表示に関する命令は一切なし。
-        const cv = new CloudVar('ws://localhost:8080', { room: 'zero-code-room' });
+        // 設定のみ。ロジックはHTMLに全て移動！
+        const cv = new CloudVar('ws://localhost:8080', { room: 'logic-demo' });
         
+        // 初期値（なくても動くが明示しておくと安全）
         score = score || 0;
-        username = username || "ゲスト";
+        isHigh = isHigh || false;
     </script>
 </body>
 </html>

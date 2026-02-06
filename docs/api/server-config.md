@@ -2,6 +2,14 @@
 
 `src/config.js` を書き換えることでサーバーの挙動をカスタマイズできます。
 
+## 起動方法
+サーバーのメインエントリは `src/server/index.js` です。
+```bash
+npm start
+# または
+node src/server/index.js
+```
+
 ## 主要な項目
 - `port`: サーバーが待機するポート。
 - `token`: サーバー全体の接続パスワード。

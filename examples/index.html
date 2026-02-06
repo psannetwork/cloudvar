@@ -25,7 +25,8 @@
         <p>こんにちは、<span cv-bind="username">誰か</span>さん！</p>
     </div>
 
-    <script src="../src/client.js"></script>
+    <!-- バンドル版を1つ読み込むだけ -->
+    <script src="../src/client.bundle.js"></script>
     <script>
         // JSはこれだけ。表示に関する命令は一切なし。
         const cv = new CloudVar('ws://localhost:8080', { room: 'zero-code-room' });

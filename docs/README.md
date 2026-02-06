@@ -2,13 +2,14 @@
 
 CloudVarは、**「コードを一行も書かずにリアルタイム同期」**を目指した、最も直感的な変数同期システムです。
 
-## 🌟 究極の「自動化」
-1. **HTML自動同期**: `cv-bind`を書くだけで表示が変わる。
-2. **待機がいらない**: 接続完了を待たずに代入してOK。
-3. **関数がいらない**: 普通の変数代入 `=` で通信が走る。
+## 📂 プロジェクト構造
+- **src/client/**: クライアントSDKのソース（Network, Binding, Coreに分割）。
+- **src/server/**: サーバーサイドのソース（Room管理, SyncEngineに分割）。
+- **src/utils/**: サーバー・クライアント共通のユーティリティ。
+- **src/client.bundle.js**: ブラウザで1ファイル読み込むだけで使える統合版。
 
 ## 📚 クイックリンク
-- **[導入ガイド (5分)](./guide/getting-started.md)**: `cv-bind`を使った最速の導入。
+- **[導入ガイド (5分)](./guide/getting-started.md)**: `client.bundle.js` を使った最速の導入。
 - **[APIリファレンス](./api/client-sdk.md)**: メソッドやプロパティの一覧。
 - **[オートバインド詳細](./guide/auto-bind.md)**: HTMLと変数を繋ぐ仕組み。
 - **[サーバー設定](./api/server-config.md)**: 自分のサーバーをカスタマイズ。

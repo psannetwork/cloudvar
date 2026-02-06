@@ -13,7 +13,7 @@ cd cloudvar
 # 依存関係のインストール
 npm install
 
-# サーバー起動 (デフォルトは 8080番ポート)
+# サーバー起動 (デフォルトは 5032番ポート)
 npm start
 ```
 
@@ -35,7 +35,7 @@ npm start
 
 <script>
   // インスタンス作成と同時にルームに参加
-  const cv = new CloudVar('ws://localhost:8080', { room: 'my-game' });
+  const cv = new CloudVar('ws://localhost:5032', { room: 'my-game' });
 
   // 🌟 接続を待たずに、いきなり変数として使える
   score = score || 0;

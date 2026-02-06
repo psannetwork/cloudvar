@@ -1,5 +1,5 @@
 module.exports = {
-    port: process.env.PORT || 8080,
+    port: process.env.PORT || 5032,
     token: process.env.TOKEN || 'default-password',
     
     // サーバー間同期の設定 (Redisを使用)

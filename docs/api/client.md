@@ -2,7 +2,7 @@
 
 ## Constructor
 `new CloudVar(url, options)`
-- `url`: WebSocketサーバーのURL (例: `ws://localhost:8080`)
+- `url`: WebSocketサーバーのURL (例: `ws://localhost:5032`)
 - `options`:
     - `token`: サーバー認証トークン
     - `mode`: `'ws'` (デフォルト) または `'p2p'`

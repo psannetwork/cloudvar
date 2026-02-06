@@ -1,36 +1,31 @@
 # クイックスタートガイド
 
-## 1. サーバーの準備
-```bash
-git clone ...
-cd cloudvar
-npm install
-npm start
-```
-サーバーが `localhost:8080` で起動します。
+CloudVarは、JavaScriptだけでなく、HTMLとも直接同期します。
 
-## 2. クライアントの実装
-HTMLで `src/client.js` を読み込みます。
+## 🌟 ゼロコード・シンク (Auto Bind)
+JavaScriptで `document.getElementById` や `innerText` を書く必要はありません。
 
+### 手順
+1. **HTMLに `cv-bind` 属性を書く**
 ```html
-<script src="src/client.js"></script>
-<script>
-  // 1. サーバーに接続（インスタンス名は 'cv' がおすすめ）
-  const cv = new CloudVar('ws://localhost:8080');
-
-  // 2. ルームに参加
-  cv.join('my-cool-game');
-
-  // 3. ルーム参加後に変数を作成（宣言）
-  cv.onChange('_joined', () => {
-    cv.playerX = 100; // 最初の宣言
-    
-    // 4. 以降は、普通の変数として読み書きするだけ！
-    playerX = 200;
-    console.log(playerX);
-  });
-</script>
+<h1 cv-bind="score">0</h1>
+<input cv-bind="username">
 ```
 
-## 3. 動作確認
-同じHTMLを2つのタブで開いてください。片方のタブで `playerX` を書き換えると、もう片方のタブでも自動的に値が変わります。
+2. **JavaScriptで値を代入するだけ**
+```javascript
+const cv = new CloudVar('ws://localhost:8080', { room: 'game1' });
+
+score = 100; // これだけでHTMLの <h1> が "100" に変わります
+```
+
+## 双方向バインディング
+`<input>` 要素に `cv-bind` を設定すると、ユーザーが文字を入力した瞬間にその変数が書き換わり、世界中の他のユーザーの画面も同時に更新されます。
+
+## 監視したい場合 (任意)
+特殊な処理（音を鳴らす、エフェクトを出すなど）が必要な場合のみ、`onChange` を使用してください。
+```javascript
+cv.onChange('score', val => {
+  playSound();
+});
+```

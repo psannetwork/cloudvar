@@ -4,7 +4,7 @@ const config = require('./config');
 class CloudVarServer {
     constructor() {
         this.wss = new WebSocketServer({ port: config.port });
-        this.rooms = new Map(); // roomId -> { variables: Map, clients: Map<id, ws>, password: string|null }
+        this.rooms = new Map(); // roomId -> { variables, clients, password, expiryTimer }
         this.setupRedis();
         this.wss.on('connection', (ws) => this.handleConnection(ws));
         console.log(`CloudVar Server running on port ${config.port}`);
@@ -33,13 +33,17 @@ class CloudVarServer {
             try {
                 const msg = JSON.parse(data);
 
-                // --- ルーム参加/作成 ---
                 if (msg.type === 'join') {
                     const room = this.getOrCreateRoom(msg.roomId, msg.password);
                     
-                    // パスワードチェック
                     if (room.password && room.password !== msg.password) {
                         return ws.send(JSON.stringify({ type: 'error', message: 'Wrong room password' }));
+                    }
+
+                    // タイマーが動いていたら解除（誰か戻ってきた）
+                    if (room.expiryTimer) {
+                        clearTimeout(room.expiryTimer);
+                        room.expiryTimer = null;
                     }
 
                     currentRoomId = msg.roomId;
@@ -60,14 +64,12 @@ class CloudVarServer {
                 if (!currentRoomId) return;
                 const room = this.rooms.get(currentRoomId);
 
-                // --- P2Pシグナリング ---
                 if (msg.type === 'signal') {
                     const target = room.clients.get(msg.to);
                     if (target) target.send(JSON.stringify({ type: 'signal', from: id, data: msg.data }));
                     return;
                 }
 
-                // --- 変数更新 ---
                 if (msg.type === 'set') {
                     room.variables.set(msg.key, msg.value);
                     const updateMsg = { type: 'update', key: msg.key, value: msg.value, sender: id, target: msg.target };
@@ -84,14 +86,26 @@ class CloudVarServer {
                 const room = this.rooms.get(currentRoomId);
                 room.clients.delete(id);
                 this.broadcast(room, { type: 'client_leave', id }, null);
-                if (room.clients.size === 0) this.rooms.delete(currentRoomId);
+                
+                // 誰もいなくなったら削除タイマー開始
+                if (room.clients.size === 0) {
+                    room.expiryTimer = setTimeout(() => {
+                        console.log(`Room [${currentRoomId}] deleted due to inactivity.`);
+                        this.rooms.delete(currentRoomId);
+                    }, config.roomExpirationMs);
+                }
             }
         });
     }
 
     getOrCreateRoom(roomId, password = null) {
         if (!this.rooms.has(roomId)) {
-            this.rooms.set(roomId, { variables: new Map(), clients: new Map(), password });
+            this.rooms.set(roomId, { 
+                variables: new Map(), 
+                clients: new Map(), 
+                password,
+                expiryTimer: null
+            });
         }
         return this.rooms.get(roomId);
     }
@@ -107,3 +121,4 @@ class CloudVarServer {
 }
 
 new CloudVarServer();
+module.exports = CloudVarServer;

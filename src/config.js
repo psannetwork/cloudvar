@@ -6,6 +6,9 @@ module.exports = {
     // null の場合は単一サーバーとして動作
     redis: process.env.REDIS_URL || null, 
 
+    // ルームが空になってから削除されるまでの時間 (ミリ秒)
+    roomExpirationMs: 1000 * 60 * 5, // 5分
+    
     // セキュリティ設定
     maxVariableSize: 1024, // 1KB
     rateLimitMs: 50,       // 送信間隔

@@ -1,30 +1,30 @@
 # CloudVar ☁️
 
-JavaScriptの変数に代入するだけで、世界中とリアルタイム同期。
-WebSocket & WebRTC (P2P) ハイブリッド対応。
+世界で最も簡単に、HTMLと変数をリアルタイム同期させる。
+
+## 究極の「2行」導入
+```html
+<!-- 1. HTMLに書く -->
+Score: <span cv-bind="score">0</span>
+
+<!-- 2. JSで代入する -->
+<script src="src/client.js"></script>
+<script>
+    const cv = new CloudVar('ws://localhost:8080', { room: 'game' });
+    score = 100; // これだけでHTMLが書き換わり、世界に同期される
+</script>
+```
 
 ## 特徴
-- 📦 **超簡単**: `score = 100` と書くだけで同期。
-- 🏠 **ルーム管理**: パスワード付きの部屋でデータを分離。
-- ⚡ **超低遅延**: P2Pモードでサーバーを介さず通信。
-- 🛡️ **セキュア**: トークン認証とユーザーブロック機能。
-- 🌐 **スケーラブル**: Redisを使って複数サーバーを同期。
+- 🪄 **オートバインド**: HTML属性 `cv-bind` で表示を自動更新。
+- ⚡ **ノンブロッキング**: 接続完了を待たずに即代入OK。
+- 🏠 **ルーム管理**: パスワード付きルームで安全に分離。
+- 🏎️ **P2P対応**: WebRTCによる極限の低遅延。
 
 ## ドキュメント
 詳細な使い方は **[docsディレクトリ](./docs/README.md)** をご覧ください。
 
-- **[5分で導入ガイド](./docs/guide/getting-started.md)**
+- **[5分で導入ガイド (オートバインド編)](./docs/guide/getting-started.md)**
 - **[APIリファレンス](./docs/api/client-sdk.md)**
+- **[オートバインドの仕組み](./docs/guide/auto-bind.md)**
 - **[サーバー設定](./docs/api/server-config.md)**
-
-## クイックプレビュー
-```javascript
-const cv = new CloudVar('ws://localhost:8080');
-cv.join('game-1');
-
-cv.onChange('_joined', () => {
-    // 宣言後は、普通の変数として扱える
-    score = score || 0;
-    score++; 
-});
-```

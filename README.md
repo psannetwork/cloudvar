@@ -21,6 +21,14 @@ Score: <span cv-bind="score">0</span>
 - 🏠 **ルーム管理**: パスワード付きルームで安全に分離。
 - 🏎️ **P2P対応**: WebRTCによる極限の低遅延。
 
+## インストール
+```bash
+git clone https://github.com/psannetwork/cloudvar.git
+cd cloudvar
+npm install
+npm start
+```
+
 ## ドキュメント
 詳細な使い方は **[docsディレクトリ](./docs/README.md)** をご覧ください。
 

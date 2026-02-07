@@ -41,12 +41,12 @@
     <!-- ビルドされたSDKを読み込む -->
     <script src="../dist/cloudvar.js"></script>
     <script>
-        // 設定のみ。ロジックはHTMLに全て移動！
+        // JSはこれだけ。
         const cv = new CloudVar('ws://localhost:5032', { room: 'logic-demo' });
         
-        // 初期値（なくても動くが明示しておくと安全）
-        score = score || 0;
-        isHigh = isHigh || false;
+        // 🌟 以下の初期化コードがなくても、HTMLに cv-bind="score" があれば
+        // ブラウザは「score という変数は存在している」と認識します。
+        // score = score || 0; 
     </script>
 </body>
 </html>

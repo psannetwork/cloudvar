@@ -18,6 +18,9 @@ class CloudVar {
 
         this._network.connect();
 
+        // 🌟 HTML内をスキャンして、使われている変数をいきなり使えるようにする
+        this._scanAndLink();
+
         return new Proxy(this, {
             get: (target, key) => {
                 if (key in target || typeof key === 'symbol') return target[key];
@@ -97,6 +100,28 @@ class CloudVar {
     onChange(key, callback) {
         if (!this._listeners.has(key)) this._listeners.set(key, new Set());
         this._listeners.get(key).add(callback);
+    }
+
+    _scanAndLink() {
+        if (typeof document === 'undefined') return;
+        const attrs = ['cv-bind', 'cv-show', 'cv-hide', 'cv-class', 'cv-on'];
+        const foundVars = new Set();
+
+        attrs.forEach(attr => {
+            document.querySelectorAll(`[${attr}]`).forEach(el => {
+                const val = el.getAttribute(attr);
+                // 変数名らしきものを抽出 (cv-on: score++ -> score)
+                const match = val.match(/([a-zA-Z_$][a-zA-Z0-9_$]*)/);
+                if (match) foundVars.add(match[1]);
+            });
+        });
+
+        foundVars.forEach(varName => {
+            if (!(varName in window)) {
+                this._linkToGlobal(varName);
+                if (this._rawVars[varName] === undefined) this._rawVars[varName] = undefined;
+            }
+        });
     }
 }
 

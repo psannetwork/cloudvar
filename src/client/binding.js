@@ -13,7 +13,11 @@ class Binding {
 
         document.addEventListener('input', (e) => {
             const key = e.target.getAttribute('cv-bind');
-            if (key) this.sdk[key] = e.target.value;
+            if (key) {
+                // 生の代入ではなく _set を使う
+                if (this.sdk._set) this.sdk._set(key, e.target.value);
+                else this.sdk[key] = e.target.value;
+            }
         });
 
         document.addEventListener('click', (e) => this.handleEvent(e, 'click'));
@@ -23,12 +27,10 @@ class Binding {
     }
 
     handleEvent(e, eventName) {
-        // 🌟 target (実際にクリック等された要素) または currentTarget (formなど) から属性を探す
         const target = (e.target.closest && e.target.closest(`[cv-on^="${eventName}:"]`)) || 
                      (e.currentTarget && e.currentTarget.getAttribute && e.currentTarget.getAttribute('cv-on')?.startsWith(eventName + ':') ? e.currentTarget : null);
         
         if (!target) {
-            // もし見つからなければ、さらに親を辿る（バブリング対策）
             let el = e.target;
             while (el && el.getAttribute) {
                 const attr = el.getAttribute('cv-on');
@@ -56,45 +58,56 @@ class Binding {
 
     evaluate(expr) {
         if (!expr) return;
-        // console.log('Evaluating:', expr); // デバッグ用
 
         // key += value (追記)
         if (expr.includes('+=')) {
             const [key, valExpr] = expr.split('+=').map(s => s.trim());
             const val = this.resolveValue(valExpr);
-            this.sdk[key] = (this.sdk[key] || "") + val;
+            const current = this.sdk._rawVars ? this.sdk._rawVars[key] : this.sdk[key];
+            this._setValue(key, (current || "") + val);
             return;
         }
 
         // key = value (代入)
         if (expr.includes('=')) {
             const [key, valExpr] = expr.split('=').map(s => s.trim());
-            this.sdk[key] = this.resolveValue(valExpr);
+            this._setValue(key, this.resolveValue(valExpr));
             return;
         }
 
         // ++ / --
         if (expr.endsWith('++')) {
             const key = expr.slice(0, -2).trim();
-            this.sdk[key] = (Number(this.sdk[key]) || 0) + 1;
+            const current = this.sdk._rawVars ? this.sdk._rawVars[key] : this.sdk[key];
+            this._setValue(key, (Number(current) || 0) + 1);
         } else if (expr.endsWith('--')) {
             const key = expr.slice(0, -2).trim();
-            this.sdk[key] = (Number(this.sdk[key]) || 0) - 1;
+            const current = this.sdk._rawVars ? this.sdk._rawVars[key] : this.sdk[key];
+            this._setValue(key, (Number(current) || 0) - 1);
         } else if (expr.startsWith('!')) {
             const key = expr.slice(1).trim();
-            this.sdk[key] = !this.sdk[key];
+            const current = this.sdk._rawVars ? this.sdk._rawVars[key] : this.sdk[key];
+            this._setValue(key, !current);
+        }
+    }
+
+    _setValue(key, value) {
+        if (this.sdk._set) {
+            this.sdk._set(key, value);
+        } else {
+            this.sdk[key] = value;
         }
     }
 
     resolveValue(valExpr) {
         if (!valExpr) return "";
         
-        // 文字列の足し算 'a' + b + 'c'
+        // 文字列の足し算
         if (valExpr.includes('+')) {
             return valExpr.split('+').map(part => this.resolveValue(part.trim())).join('');
         }
 
-        // 文字列定数 'hello' "world"
+        // 文字列定数
         if (/^['"].*['"]$/.test(valExpr)) {
             return valExpr.replace(/^['"]|['"]$/g, '');
         }
@@ -103,14 +116,13 @@ class Binding {
             return Number(valExpr);
         }
         // 他の変数名
-        const val = this.sdk[valExpr];
-        // 🌟 変数が存在しないか undefined の場合は、
-        // 文字列結合なら空文字、数値演算なら0として扱う
+        const val = this.sdk._rawVars ? this.sdk._rawVars[valExpr] : this.sdk[valExpr];
         return val !== undefined ? val : "";
     }
 
     scan() {
-        Object.keys(this.sdk._rawVars).forEach(key => this.updateAll(key, this.sdk._rawVars[key]));
+        const vars = this.sdk._rawVars || {};
+        Object.keys(vars).forEach(key => this.updateAll(key, vars[key]));
     }
 
     updateAll(key, value) {

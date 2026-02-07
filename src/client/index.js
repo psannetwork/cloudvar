@@ -43,10 +43,14 @@ class CloudVar {
     }
 
     _set(key, value) {
+        // ネットワーク送信は値が変わった時だけ
+        if (this._rawVars[key] !== value) {
+            const payload = { type: 'set', key, value, roomId: this.roomId };
+            if (!this.joined) this._pendingSets.push(payload);
+            else this._network.send(payload);
+        }
+
         this._rawVars[key] = value;
-        const payload = { type: 'set', key, value, roomId: this.roomId };
-        if (!this.joined) this._pendingSets.push(payload);
-        else this._network.send(payload);
         this._emit(key, value);
         this._emit('*', value, key);
     }

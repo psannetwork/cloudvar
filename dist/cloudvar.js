@@ -1,6 +1,6 @@
 /**
  * CloudVar Client SDK
- * Build Date: 2026-02-07T04:44:36.472Z
+ * Build Date: 2026-02-07T04:46:59.800Z
  */
 
 // --- index.js ---
@@ -285,7 +285,7 @@ class CloudVar {
         this.joined = false;
         this.clientList = [];
         this._rawVars = {};
-        this._localVars = new Set(); // 🌟 同期しないローカル変数のリスト
+        this._localVars = new Set();
         this._pendingSets = new Map();
         this._listeners = new Map();
 
@@ -297,6 +297,8 @@ class CloudVar {
 
         return new Proxy(this, {
             get: (target, key) => {
+                // 特殊プロパティへのアクセス
+                if (key === 'varList') return target.varList;
                 if (key in target || typeof key === 'symbol') return target[key];
                 return target._rawVars[key];
             },
@@ -311,6 +313,16 @@ class CloudVar {
         });
     }
 
+    // 🌟 同期中の変数名一覧を返す（ローカル変数は除外）
+    get varList() {
+        return Object.keys(this._rawVars).filter(key => !this._localVars.has(key));
+    }
+
+    // 🌟 指定した変数のクラウド同期を解除する（DOM同期は維持される）
+    unSync(key) {
+        this._localVars.add(key);
+    }
+
     join(roomId, password = null) {
         this.roomId = roomId;
         this._network.send({ type: 'join', roomId, password, token: this.config.token });
@@ -319,7 +331,6 @@ class CloudVar {
     _set(key, value) {
         if (this._rawVars[key] === value) return;
 
-        // 🌟 ローカル変数でなければネットワークに送信
         if (!this._localVars.has(key)) {
             if (!this.joined) {
                 this._pendingSets.set(key, value);
@@ -351,7 +362,6 @@ class CloudVar {
                 this._emit('_joined', msg.roomId);
                 break;
             case 'update':
-                // 🌟 ローカル変数がサーバーから上書きされないようにガード
                 if (this._localVars.has(msg.key)) return;
                 this._linkToGlobal(msg.key);
                 this._rawVars[msg.key] = msg.value;
@@ -399,12 +409,10 @@ class CloudVar {
 
     _scanAndLink() {
         if (typeof document === 'undefined') return;
-        // 🌟 cv-local もスキャン対象に加える
         const attrs = ['cv-bind', 'cv-local', 'cv-show', 'cv-hide', 'cv-class', 'cv-on'];
         const foundVars = new Set();
         const reserved = new Set(['true', 'false', 'null', 'undefined', 'click', 'submit', 'window', 'document', 'cv', 'CloudVar']);
 
-        // まず cv-local を探してローカル変数として登録
         document.querySelectorAll('[cv-local]').forEach(el => {
             const varName = el.getAttribute('cv-local');
             if (varName) this._localVars.add(varName);
@@ -431,6 +439,5 @@ class CloudVar {
 if (typeof window !== 'undefined') {
     window.CloudVar = CloudVar;
 }
-
 })();
 

@@ -26,7 +26,10 @@ HTMLで `cloudvar.js` を読み込み、変数を書くだけ。
 
 <script>
   // これだけで接続完了！
-  const cv = new CloudVar('ws://your-server:5032');
+  const cv = new CloudVar('ws://your-server:5032', {
+    room: 'my-room',
+    mode: 'p2p' // 'ws' (デフォルト) または 'p2p' (WebRTC)
+  });
   
   // JavaScriptからも普通に触れる
   setInterval(() => score++, 1000);

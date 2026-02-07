@@ -7,39 +7,36 @@ class Binding {
     setup() {
         if (typeof document === 'undefined') return;
 
-        // 全変数の変更を監視してUI更新
         this.sdk.onChange('*', (key, value) => {
             this.updateAll(key, value);
         });
 
-        // 入力を変数に反映 (双方向)
         document.addEventListener('input', (e) => {
             const key = e.target.getAttribute('cv-bind');
             if (key) this.sdk[key] = e.target.value;
         });
 
-        // 🌟 cv-on イベントリスナー (クリックなどで変数を操作)
-        // 例: cv-on="click: score++"
         document.addEventListener('click', (e) => this.handleEvent(e, 'click'));
+        // フォーム送信時はページ遷移を防止して式を評価
         document.addEventListener('submit', (e) => this.handleEvent(e, 'submit'));
 
         window.addEventListener('DOMContentLoaded', () => this.scan());
     }
 
-    // イベントハンドリング (簡易的な式評価)
     handleEvent(e, eventName) {
         const target = e.target.closest(`[cv-on^="${eventName}:"]`);
         if (!target) return;
 
-        const attr = target.getAttribute('cv-on'); // "click: score++"
-        const expression = attr.split(':')[1].trim(); // "score++"
+        const attr = target.getAttribute('cv-on');
+        const expressions = attr.split(':')[1].split(';'); // セミコロンで分割
 
         e.preventDefault();
-        this.evaluate(expression);
+        expressions.forEach(expr => this.evaluate(expr.trim()));
     }
 
-    // 簡易式評価エンジン
     evaluate(expr) {
+        if (!expr) return;
+
         // score++ / score--
         if (expr.endsWith('++')) {
             const key = expr.slice(0, -2).trim();
@@ -51,24 +48,47 @@ class Binding {
             this.sdk[key] = (Number(this.sdk[key]) || 0) - 1;
             return;
         }
-        // key = value
-        if (expr.includes('=')) {
-            const [key, val] = expr.split('=').map(s => s.trim());
-            // 文字列の場合はクォートを外す簡易処理
-            const cleanVal = val.replace(/^['"]|['"]$/g, ''); 
-            // 数字なら数字に変換
-            this.sdk[key] = isNaN(Number(cleanVal)) ? cleanVal : Number(cleanVal);
+
+        // key += value (追記)
+        if (expr.includes('+=')) {
+            const [key, valExpr] = expr.split('+=').map(s => s.trim());
+            const val = this.resolveValue(valExpr);
+            this.sdk[key] = (this.sdk[key] || "") + val;
             return;
         }
-        // toggle key (真偽値反転)
+
+        // key = value (代入)
+        if (expr.includes('=')) {
+            const [key, valExpr] = expr.split('=').map(s => s.trim());
+            this.sdk[key] = this.resolveValue(valExpr);
+            return;
+        }
+
+        // toggle !key
         if (expr.startsWith('!')) {
             const key = expr.slice(1).trim();
             this.sdk[key] = !this.sdk[key];
         }
     }
 
+    // 文字列、数値、または他の変数名を解決
+    resolveValue(valExpr) {
+        // 文字列定数 'hello' "world"
+        if (/^['"].*['"]$/.test(valExpr)) {
+            return valExpr.replace(/^['"]|['"]$/g, '');
+        }
+        // 他の変数名
+        if (this.sdk._rawVars[valExpr] !== undefined) {
+            return this.sdk._rawVars[valExpr];
+        }
+        // 数値
+        if (!isNaN(Number(valExpr))) {
+            return Number(valExpr);
+        }
+        return valExpr;
+    }
+
     scan() {
-        // 既存の変数を全て画面に反映
         Object.keys(this.sdk._rawVars).forEach(key => this.updateAll(key, this.sdk._rawVars[key]));
     }
 
@@ -78,7 +98,6 @@ class Binding {
         this.updateClass(key, value);
     }
 
-    // cv-bind: テキストや入力値の同期
     updateBind(key, value) {
         document.querySelectorAll(`[cv-bind="${key}"]`).forEach(el => {
             if (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)) {
@@ -89,19 +108,15 @@ class Binding {
         });
     }
 
-    // cv-show / cv-hide: 表示・非表示
     updateShowHide(key, value) {
-        // cv-show="key" -> trueなら表示
         document.querySelectorAll(`[cv-show="${key}"]`).forEach(el => {
             el.style.display = value ? '' : 'none';
         });
-        // cv-hide="key" -> trueなら消す
         document.querySelectorAll(`[cv-hide="${key}"]`).forEach(el => {
             el.style.display = value ? 'none' : '';
         });
     }
 
-    // cv-class="key: className" -> trueならクラスをつける
     updateClass(key, value) {
         document.querySelectorAll(`[cv-class^="${key}:"]`).forEach(el => {
             const className = el.getAttribute('cv-class').split(':')[1].trim();

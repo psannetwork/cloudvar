@@ -2,51 +2,47 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>CloudVar Logic Demo</title>
+    <title>CloudVar Simple Chat</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f0f4f8; }
-        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto; }
-        .btn { padding: 10px 20px; font-size: 1.2em; cursor: pointer; border: none; border-radius: 5px; background: #ddd; }
-        .btn.active { background: #3b82f6; color: white; }
-        .danger { color: red; font-weight: bold; }
+        body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        .chat-container { width: 100%; max-width: 500px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: 80vh; }
+        .header { padding: 15px; border-bottom: 1px solid #eee; font-weight: bold; background: #3b82f6; color: white; border-radius: 8px 8px 0 0; }
+        .messages { flex: 1; padding: 15px; overflow-y: auto; white-space: pre-wrap; font-size: 0.9em; line-height: 1.5; background: #fafafa; }
+        .input-area { padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; flex-direction: column; }
+        .row { display: flex; gap: 10px; }
+        input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; outline: none; }
+        button { padding: 8px 15px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #2563eb; }
+        .nickname-box { font-size: 0.8em; color: #666; margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h2>クラウド・クリッカー</h2>
+    <div class="chat-container">
+        <div class="header">☁️ CloudVar Realtime Chat</div>
         
-        <!-- cv-bind: スコア表示 -->
-        <h1><span cv-bind="score">0</span></h1>
+        <!-- チャットログの表示 -->
+        <div class="messages" cv-bind="chatLog"></div>
 
-        <!-- cv-on: クリックで加算 (JS不要！) -->
-        <button class="btn" cv-on="click: score++">押す！</button>
-        
-        <hr>
-
-        <!-- cv-show: スコア10以上で表示 -->
-        <!-- 注意: 現在の簡易版では変数の真偽値のみ。比較演算は将来拡張予定 -->
-        <!-- ここではデモ用に isHigh を使う -->
-        <div cv-show="isHigh">
-            <p class="danger">ハイスコアモード突入！</p>
-        </div>
-
-        <button class="btn" 
-            cv-class="isHigh: active" 
-            cv-on="click: !isHigh">
-            モード切替 (cv-class & cv-on)
-        </button>
+        <form class="input-area" cv-on="submit: chatLog += nickname; chatLog += ': '; chatLog += msg; chatLog += '\n'; msg = ''">
+            <div class="nickname-box">
+                名前: <input type="text" cv-bind="nickname" style="flex: none; width: 100px;" placeholder="なまえ">
+            </div>
+            <div class="row">
+                <input type="text" cv-bind="msg" placeholder="メッセージを入力...">
+                <button type="submit">送信</button>
+            </div>
+        </form>
     </div>
 
-    <!-- ビルドされたSDKを読み込む -->
     <script src="../dist/cloudvar.js"></script>
     <script>
-        // JSはこれだけ。
-        const cv = new CloudVar('ws://localhost:5032', { room: 'logic-demo' });
-        
-        // 🌟 以下の初期化コードがなくても、HTMLに cv-bind="score" があれば
-        // ブラウザは「score という変数は存在している」と認識します。
-        // score = score || 0; 
+        // サーバーに接続（これだけでチャットが機能する）
+        const cv = new CloudVar('ws://localhost:5032', { room: 'chat-room' });
+
+        // 初期値の設定
+        nickname = nickname || "ゲスト" + Math.floor(Math.random() * 1000);
+        chatLog = chatLog || "--- チャットへようこそ ---\n";
     </script>
 </body>
 </html>

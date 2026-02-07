@@ -1,6 +1,6 @@
 /**
  * CloudVar Client SDK
- * Build Date: 2026-02-07T01:41:56.456Z
+ * Build Date: 2026-02-07T01:44:51.414Z
  */
 
 // --- index.js ---
@@ -101,11 +101,29 @@ class Binding {
     }
 
     handleEvent(e, eventName) {
-        const target = e.target.closest(`[cv-on^="${eventName}:"]`);
-        if (!target) return;
+        // 🌟 target (実際にクリック等された要素) または currentTarget (formなど) から属性を探す
+        const target = (e.target.closest && e.target.closest(`[cv-on^="${eventName}:"]`)) || 
+                     (e.currentTarget && e.currentTarget.getAttribute && e.currentTarget.getAttribute('cv-on')?.startsWith(eventName + ':') ? e.currentTarget : null);
+        
+        if (!target) {
+            // もし見つからなければ、さらに親を辿る（バブリング対策）
+            let el = e.target;
+            while (el && el.getAttribute) {
+                const attr = el.getAttribute('cv-on');
+                if (attr && attr.startsWith(eventName + ':')) {
+                    this._executeEvent(e, el);
+                    return;
+                }
+                el = el.parentElement;
+            }
+            return;
+        }
 
-        const attr = target.getAttribute('cv-on');
-        // 🌟 最初のコロン以降をすべて式として取得する
+        this._executeEvent(e, target);
+    }
+
+    _executeEvent(e, element) {
+        const attr = element.getAttribute('cv-on');
         const firstColonIndex = attr.indexOf(':');
         const expressionPart = attr.substring(firstColonIndex + 1);
         const expressions = expressionPart.split(';');
@@ -147,6 +165,13 @@ class Binding {
     }
 
     resolveValue(valExpr) {
+        if (!valExpr) return "";
+        
+        // 文字列の足し算 'a' + b + 'c'
+        if (valExpr.includes('+')) {
+            return valExpr.split('+').map(part => this.resolveValue(part.trim())).join('');
+        }
+
         // 文字列定数 'hello' "world"
         if (/^['"].*['"]$/.test(valExpr)) {
             return valExpr.replace(/^['"]|['"]$/g, '');

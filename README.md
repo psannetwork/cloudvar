@@ -15,7 +15,7 @@ HTML属性を書くだけで、JavaScript変数が世界中のブラウザと一
 HTMLで `cloudvar.js` を読み込み、変数を書くだけ。
 
 ```html
-<script src="https://unpkg.com/cloudvar/dist/cloudvar.js"></script>
+<script src="https://github.com/psannetwork/cloudvar/releases/download/V2.0/cloudvar.js"></script>
 
 <!-- 表示と入力が同期 -->
 <h1 cv-bind="score">0</h1>

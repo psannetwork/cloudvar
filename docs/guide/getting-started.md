@@ -25,7 +25,7 @@ npm start
 
 ```html
 <!-- SDKを読み込む -->
-<script src="dist/cloudvar.js"></script>
+<script src="https://github.com/psannetwork/cloudvar/releases/download/V2.0/cloudvar.js"></script>
 
 <!-- 表示用 -->
 <h1>Score: <span cv-bind="score">0</span></h1>

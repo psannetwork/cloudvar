@@ -1,6 +1,6 @@
 /**
  * CloudVar Client SDK
- * Build Date: 2026-02-06T22:03:52.950Z
+ * Build Date: 2026-02-07T00:14:00.817Z
  */
 
 // --- index.js ---
@@ -32,11 +32,8 @@ const utils = {
     }
 };
 
-if (typeof module !== 'undefined' && module.exports) {
-    
-} else {
-    window.CloudVarUtils = utils;
-}
+
+window.CloudVarUtils = utils;
 
 })();
 
@@ -70,8 +67,8 @@ class Network {
     }
 }
 
-if (typeof module !== 'undefined') 
-else window.CloudVarNetwork = Network;
+
+window.CloudVarNetwork = Network;
 
 })();
 
@@ -190,8 +187,8 @@ class Binding {
     }
 }
 
-if (typeof module !== 'undefined') 
-else window.CloudVarBinding = Binding;
+
+window.CloudVarBinding = Binding;
 })();
 
 // --- index.js ---
@@ -298,8 +295,8 @@ class CloudVar {
     }
 }
 
-if (typeof module !== 'undefined' && module.exports) 
-else window.CloudVar = CloudVar;
+
+window.CloudVar = CloudVar;
 
 })();
 

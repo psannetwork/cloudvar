@@ -25,9 +25,10 @@ try {
     files.forEach(file => {
         let content = fs.readFileSync(file, 'utf8');
         
-        // CJSの module.exports や require をブラウザ向けに無効化
+        // CJSの module.exports 判定ブロックをまるごと削除
+        content = content.replace(/if \(typeof module !== 'undefined'[\s\S]*?module\.exports = .*?;\s*\}/g, '');
+        // require を削除
         content = content.replace(/const .* = require\(.*\);/g, '');
-        content = content.replace(/module\.exports = .*;/g, '');
         
         bundle += `// --- ${path.basename(file)} ---\n`;
         bundle += `(function(){\n${content}\n})();\n\n`;

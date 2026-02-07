@@ -100,5 +100,7 @@ class CloudVar {
     }
 }
 
-if (typeof module !== 'undefined' && module.exports) module.exports = CloudVar;
-else window.CloudVar = CloudVar;
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = CloudVar;
+}
+window.CloudVar = CloudVar;

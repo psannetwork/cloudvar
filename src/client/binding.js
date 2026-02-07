@@ -111,5 +111,7 @@ class Binding {
     }
 }
 
-if (typeof module !== 'undefined') module.exports = Binding;
-else window.CloudVarBinding = Binding;
+if (typeof module !== 'undefined') {
+    module.exports = Binding;
+}
+window.CloudVarBinding = Binding;

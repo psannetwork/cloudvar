@@ -1,6 +1,6 @@
 /**
  * CloudVar Client SDK
- * Build Date: 2026-02-07T01:13:08.930Z
+ * Build Date: 2026-02-07T01:22:39.229Z
  */
 
 // --- index.js ---
@@ -91,7 +91,7 @@ class Binding {
         });
 
         document.addEventListener('click', (e) => this.handleEvent(e, 'click'));
-        document.addEventListener('submit', (e) => this.handleEvent(e, 'submit'));
+        document.addEventListener('submit', (e) => this.handleEvent(e, 'submit'), true);
 
         window.addEventListener('DOMContentLoaded', () => this.scan());
     }
@@ -112,6 +112,7 @@ class Binding {
 
     evaluate(expr) {
         if (!expr) return;
+        // console.log('Evaluating:', expr); // デバッグ用
 
         // key += value (追記)
         if (expr.includes('+=')) {
@@ -146,15 +147,13 @@ class Binding {
         if (/^['"].*['"]$/.test(valExpr)) {
             return valExpr.replace(/^['"]|['"]$/g, '');
         }
-        // 他の変数名 (Proxy経由で取得)
-        if (this.sdk[valExpr] !== undefined) {
-            return this.sdk[valExpr];
-        }
         // 数値
-        if (!isNaN(Number(valExpr))) {
+        if (!isNaN(Number(valExpr)) && valExpr !== '') {
             return Number(valExpr);
         }
-        return valExpr;
+        // 他の変数名 (Proxy経由で取得)
+        const val = this.sdk[valExpr];
+        return val !== undefined ? val : valExpr;
     }
 
     scan() {

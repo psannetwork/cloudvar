@@ -63,5 +63,10 @@ server.start();
 npm install cloudvar
 ```
 
+## 🤝 貢献 (Contribution)
+
+CloudVar はオープンソースプロジェクトです。バグ報告や機能提案、プルリクエストを歓迎します！
+詳しくは [CONTRIBUTING.md](./CONTRIBUTING.md) をご覧ください。
+
 ## 📜 ライセンス
-MIT
+MIT (See [LICENSE](./LICENSE))

@@ -25,9 +25,8 @@ class Network {
         console.log('[INFO] P2P Mode enabled. WebRTC mesh setup in progress...');
     }
 
-    handleMessage(msg) {
-        if (msg.sender && this.sdk.blockList.has(msg.sender)) return;
-
+        handleMessage(msg) {
+            if (msg.sender && this.sdk.blockList && this.sdk.blockList.has(msg.sender)) return;
         // WebRTC 信号メッセージの処理
         if (msg.type === 'rtc_signal') {
             this.handleRTCSignal(msg);

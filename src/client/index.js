@@ -5,11 +5,14 @@ class CloudVar {
         this.roomId = this.config.room;
         this.joined = false;
         this.clientList = [];
+        this.blockList = new Set(); // 🌟 確実に初期化
+        
         this._rawVars = {};
         this._localVars = new Set();
         this._pendingSets = new Map();
         this._listeners = new Map();
 
+        // モジュール初期化
         this._network = new (typeof CloudVarNetwork !== 'undefined' ? CloudVarNetwork : null)(this);
         this._binding = new (typeof CloudVarBinding !== 'undefined' ? CloudVarBinding : null)(this);
 
@@ -18,7 +21,6 @@ class CloudVar {
 
         return new Proxy(this, {
             get: (target, key) => {
-                // 特殊プロパティへのアクセス
                 if (key === 'varList') return target.varList;
                 if (key in target || typeof key === 'symbol') return target[key];
                 return target._rawVars[key];
@@ -34,12 +36,10 @@ class CloudVar {
         });
     }
 
-    // 🌟 同期中の変数名一覧を返す（ローカル変数は除外）
     get varList() {
         return Object.keys(this._rawVars).filter(key => !this._localVars.has(key));
     }
 
-    // 🌟 指定した変数のクラウド同期を解除する（DOM同期は維持される）
     unSync(key) {
         this._localVars.add(key);
     }
@@ -70,16 +70,20 @@ class CloudVar {
             case 'join_ok':
                 this.joined = true;
                 this.id = msg.id;
+                this.clientList = msg.clients;
+
                 Object.entries(msg.data).forEach(([k, v]) => {
                     this._rawVars[k] = v;
                     this._linkToGlobal(k);
                     this._pendingSets.delete(k);
                     this._emit(k, v);
                 });
+
                 this._pendingSets.forEach((value, key) => {
                     this._network.send({ type: 'set', key, value, roomId: this.roomId });
                 });
                 this._pendingSets.clear();
+
                 this._emit('_joined', msg.roomId);
                 break;
             case 'update':
@@ -106,8 +110,10 @@ class CloudVar {
             const desc = Object.getOwnPropertyDescriptor(window, key);
             if (desc && !desc.configurable) return;
             if (desc && desc.set && desc.set._isCloudVar) return;
+
             const setter = (val) => this._set(key, val);
             setter._isCloudVar = true;
+
             Object.defineProperty(window, key, {
                 get: () => this._rawVars[key],
                 set: setter,

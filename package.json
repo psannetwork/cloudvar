@@ -3,6 +3,14 @@
   "version": "1.0.0",
   "description": "",
   "main": "src/server/index.js",
+  "bin": {
+    "cloudvar-server": "src/server/index.js"
+  },
+  "files": [
+    "src",
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "start": "node src/server/index.js",
     "build": "node scripts/build.js",

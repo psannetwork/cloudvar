@@ -1,53 +1,49 @@
-const { WebSocketServer } = require('ws');
-const config = require('../config');
+const http = require('http');
+const WebSocket = require('ws');
 const SyncEngine = require('./sync-engine');
+const RoomManager = require('./room');
 const utils = require('../utils');
 
 class CloudVarServer {
-    constructor() {
-        this.wss = new WebSocketServer({ port: config.port });
-        this.engine = new SyncEngine(this.wss);
-        this.wss.on('connection', (ws) => this.handleConnection(ws));
-        utils.log(`CloudVar Server running on port ${config.port}`);
+    constructor(options = {}) {
+        this.port = options.port || 5032;
+        this.server = options.server || http.createServer();
+        this.wss = new WebSocket.Server({ server: this.server });
+        this.rooms = new RoomManager();
+        this.engine = new SyncEngine(this.rooms);
+
+        this.setup();
     }
 
-    handleConnection(ws) {
-        const clientId = utils.generateId();
-        let currentRoom = null;
-
-        ws.on('message', (data) => {
-            try {
-                const msg = JSON.parse(data);
-
-                if (msg.type === 'join') {
-                    currentRoom = this.engine.handleJoin(ws, clientId, msg);
-                    return;
+    setup() {
+        this.wss.on('connection', (ws) => {
+            ws.on('message', (data) => {
+                try {
+                    const msg = JSON.parse(data);
+                    this.engine.handle(ws, msg);
+                } catch (e) {
+                    console.error('[ERR] Invalid JSON', e);
                 }
+            });
 
-                if (!currentRoom) return;
-
-                if (msg.type === 'set') {
-                    currentRoom.setVariable(msg.key, msg.value);
-                    const updateMsg = { type: 'update', key: msg.key, value: msg.value, sender: clientId, target: msg.target };
-                    this.engine.broadcast(currentRoom, updateMsg, ws, clientId);
-                    this.engine.publish(currentRoom.id, updateMsg, clientId);
-                    return;
-                }
-
-                if (msg.type === 'signal') {
-                    const target = currentRoom.clients.get(msg.to);
-                    if (target) target.send(JSON.stringify({ type: 'signal', from: clientId, data: msg.data }));
-                }
-            } catch (e) {}
+            ws.on('close', () => {
+                this.rooms.leaveAll(ws);
+            });
         });
+    }
 
-        ws.on('close', () => {
-            if (currentRoom) {
-                currentRoom.removeClient(clientId);
-                this.engine.broadcast(currentRoom, { type: 'client_leave', id: clientId }, null);
-            }
+    start() {
+        if (this.server.listening) return;
+        this.server.listen(this.port, () => {
+            console.log(`[INFO] CloudVar Server running on port ${this.port}`);
         });
     }
 }
 
-new CloudVarServer();
+// 直接実行された場合の起動処理
+if (require.main === module) {
+    const server = new CloudVarServer();
+    server.start();
+}
+
+module.exports = CloudVarServer;

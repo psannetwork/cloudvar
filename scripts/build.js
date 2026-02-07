@@ -25,10 +25,10 @@ try {
     files.forEach(file => {
         let content = fs.readFileSync(file, 'utf8');
         
-        // CJSの module.exports 判定ブロックをまるごと削除
-        content = content.replace(/if \(typeof module !== 'undefined'[\s\S]*?module\.exports = .*?;\s*\}/g, '');
-        // require を削除
-        content = content.replace(/const .* = require\(.*\);/g, '');
+        // CJSの module.exports 判定ブロックをまるごと削除 (ifブロック全体)
+        content = content.replace(/if\s*\(typeof\s*module\s*!==\s*'undefined'[\s\S]*?\}\s*/g, '');
+        // インラインの require を含む行、または require 単体を削除
+        content = content.replace(/.*require\(.*\).*\n?/g, '');
         
         bundle += `// --- ${path.basename(file)} ---\n`;
         bundle += `(function(){\n${content}\n})();\n\n`;

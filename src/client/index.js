@@ -12,9 +12,9 @@ class CloudVar {
         this._listeners = new Map();
 
         // モジュール初期化
-        this._utils = typeof CloudVarUtils !== 'undefined' ? CloudVarUtils : require('../utils');
-        this._network = new (typeof CloudVarNetwork !== 'undefined' ? CloudVarNetwork : require('./network'))(this);
-        this._binding = new (typeof CloudVarBinding !== 'undefined' ? CloudVarBinding : require('./binding'))(this);
+        this._utils = typeof CloudVarUtils !== 'undefined' ? CloudVarUtils : null;
+        this._network = new (typeof CloudVarNetwork !== 'undefined' ? CloudVarNetwork : null)(this);
+        this._binding = new (typeof CloudVarBinding !== 'undefined' ? CloudVarBinding : null)(this);
 
         this._network.connect();
 

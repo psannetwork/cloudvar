@@ -1,6 +1,6 @@
 /**
  * CloudVar Client SDK
- * Build Date: 2026-02-07T01:25:26.096Z
+ * Build Date: 2026-02-07T01:30:47.910Z
  */
 
 // --- index.js ---
@@ -155,9 +155,11 @@ class Binding {
         if (!isNaN(Number(valExpr)) && valExpr !== '') {
             return Number(valExpr);
         }
-        // 他の変数名 (Proxy経由で取得)
+        // 他の変数名
         const val = this.sdk[valExpr];
-        return val !== undefined ? val : valExpr;
+        // 🌟 変数が存在しないか undefined の場合は、
+        // 文字列結合なら空文字、数値演算なら0として扱う
+        return val !== undefined ? val : "";
     }
 
     scan() {
@@ -309,13 +311,18 @@ class CloudVar {
         if (typeof document === 'undefined') return;
         const attrs = ['cv-bind', 'cv-show', 'cv-hide', 'cv-class', 'cv-on'];
         const foundVars = new Set();
+        // JSの予約語や既にあるプロパティを除外
+        const reserved = new Set(['true', 'false', 'null', 'undefined', 'click', 'submit', 'window', 'document', 'cv']);
 
         attrs.forEach(attr => {
             document.querySelectorAll(`[${attr}]`).forEach(el => {
                 const val = el.getAttribute(attr);
-                // 変数名らしきものを抽出 (cv-on: score++ -> score)
-                const match = val.match(/([a-zA-Z_$][a-zA-Z0-9_$]*)/);
-                if (match) foundVars.add(match[1]);
+                // 🌟 全ての英単語を抽出
+                const matches = val.matchAll(/[a-zA-Z_$][a-zA-Z0-9_$]*/g);
+                for (const match of matches) {
+                    const varName = match[0];
+                    if (!reserved.has(varName)) foundVars.add(varName);
+                }
             });
         });
 

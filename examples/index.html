@@ -37,18 +37,21 @@
 
     <script src="../dist/cloudvar.js"></script>
     <script>
-        // サーバーに接続（これだけでチャットが機能する）
         const cv = new CloudVar('ws://localhost:5032', { room: 'chat-room' });
 
-        // 🌟 ログが更新されたら一番下までスクロールする
+        // 自動スクロール
         cv.onChange('chatLog', () => {
             const el = document.querySelector('.messages');
             el.scrollTop = el.scrollHeight;
         });
 
-        // 初期値の設定
-        nickname = nickname || "ゲスト" + Math.floor(Math.random() * 1000);
-        chatLog = chatLog || "--- チャットへようこそ ---\n";
+        // 🌟 HTMLにある変数は、この時点で定義済み。
+        // 未定義チェック(typeof)をしてから初期値を代入。
+        if (typeof nickname === 'undefined' || nickname === null) nickname = "ゲスト" + Math.floor(Math.random() * 1000);
+        if (typeof chatLog === 'undefined' || chatLog === null) chatLog = "--- チャットへようこそ ---\n";
+        
+        // メッセージ入力欄も空で初期化
+        msg = "";
     </script>
 </body>
 </html>

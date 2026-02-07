@@ -77,9 +77,11 @@ class Binding {
         if (!isNaN(Number(valExpr)) && valExpr !== '') {
             return Number(valExpr);
         }
-        // 他の変数名 (Proxy経由で取得)
+        // 他の変数名
         const val = this.sdk[valExpr];
-        return val !== undefined ? val : valExpr;
+        // 🌟 変数が存在しないか undefined の場合は、
+        // 文字列結合なら空文字、数値演算なら0として扱う
+        return val !== undefined ? val : "";
     }
 
     scan() {

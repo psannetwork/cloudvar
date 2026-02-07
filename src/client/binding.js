@@ -12,9 +12,8 @@ class Binding {
         });
 
         document.addEventListener('input', (e) => {
-            const key = e.target.getAttribute('cv-bind');
+            const key = e.target.getAttribute('cv-bind') || e.target.getAttribute('cv-local');
             if (key) {
-                // 生の代入ではなく _set を使う
                 if (this.sdk._set) this.sdk._set(key, e.target.value);
                 else this.sdk[key] = e.target.value;
             }
@@ -132,7 +131,7 @@ class Binding {
     }
 
     updateBind(key, value) {
-        document.querySelectorAll(`[cv-bind="${key}"]`).forEach(el => {
+        document.querySelectorAll(`[cv-bind="${key}"], [cv-local="${key}"]`).forEach(el => {
             if (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)) {
                 if (el.value !== String(value)) el.value = value;
             } else {

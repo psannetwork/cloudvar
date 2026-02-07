@@ -5,13 +5,11 @@ class CloudVar {
         this.roomId = this.config.room;
         this.joined = false;
         this.clientList = [];
-        this.blockList = new Set();
-        
         this._rawVars = {};
-        this._pendingSets = new Map(); // キーごとに最新の待機中の値を保持
+        this._localVars = new Set(); // 🌟 同期しないローカル変数のリスト
+        this._pendingSets = new Map();
         this._listeners = new Map();
 
-        this._utils = typeof CloudVarUtils !== 'undefined' ? CloudVarUtils : null;
         this._network = new (typeof CloudVarNetwork !== 'undefined' ? CloudVarNetwork : null)(this);
         this._binding = new (typeof CloudVarBinding !== 'undefined' ? CloudVarBinding : null)(this);
 
@@ -42,10 +40,13 @@ class CloudVar {
     _set(key, value) {
         if (this._rawVars[key] === value) return;
 
-        if (!this.joined) {
-            this._pendingSets.set(key, value);
-        } else {
-            this._network.send({ type: 'set', key, value, roomId: this.roomId });
+        // 🌟 ローカル変数でなければネットワークに送信
+        if (!this._localVars.has(key)) {
+            if (!this.joined) {
+                this._pendingSets.set(key, value);
+            } else {
+                this._network.send({ type: 'set', key, value, roomId: this.roomId });
+            }
         }
 
         this._rawVars[key] = value;
@@ -58,26 +59,21 @@ class CloudVar {
             case 'join_ok':
                 this.joined = true;
                 this.id = msg.id;
-                this.clientList = msg.clients;
-
-                // 🌟 サーバーのデータを優先してマージ
                 Object.entries(msg.data).forEach(([k, v]) => {
                     this._rawVars[k] = v;
                     this._linkToGlobal(k);
-                    // サーバーにデータがある場合、待機中の初期値（デフォルト値）は破棄する
                     this._pendingSets.delete(k);
                     this._emit(k, v);
                 });
-
-                // サーバーになかったデータ（独自の初期値など）だけを送信
                 this._pendingSets.forEach((value, key) => {
                     this._network.send({ type: 'set', key, value, roomId: this.roomId });
                 });
                 this._pendingSets.clear();
-
                 this._emit('_joined', msg.roomId);
                 break;
             case 'update':
+                // 🌟 ローカル変数がサーバーから上書きされないようにガード
+                if (this._localVars.has(msg.key)) return;
                 this._linkToGlobal(msg.key);
                 this._rawVars[msg.key] = msg.value;
                 this._emit(msg.key, msg.value);
@@ -100,10 +96,8 @@ class CloudVar {
             const desc = Object.getOwnPropertyDescriptor(window, key);
             if (desc && !desc.configurable) return;
             if (desc && desc.set && desc.set._isCloudVar) return;
-
             const setter = (val) => this._set(key, val);
             setter._isCloudVar = true;
-
             Object.defineProperty(window, key, {
                 get: () => this._rawVars[key],
                 set: setter,
@@ -126,9 +120,16 @@ class CloudVar {
 
     _scanAndLink() {
         if (typeof document === 'undefined') return;
-        const attrs = ['cv-bind', 'cv-show', 'cv-hide', 'cv-class', 'cv-on'];
+        // 🌟 cv-local もスキャン対象に加える
+        const attrs = ['cv-bind', 'cv-local', 'cv-show', 'cv-hide', 'cv-class', 'cv-on'];
         const foundVars = new Set();
         const reserved = new Set(['true', 'false', 'null', 'undefined', 'click', 'submit', 'window', 'document', 'cv', 'CloudVar']);
+
+        // まず cv-local を探してローカル変数として登録
+        document.querySelectorAll('[cv-local]').forEach(el => {
+            const varName = el.getAttribute('cv-local');
+            if (varName) this._localVars.add(varName);
+        });
 
         attrs.forEach(attr => {
             document.querySelectorAll(`[${attr}]`).forEach(el => {

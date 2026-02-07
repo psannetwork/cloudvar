@@ -26,10 +26,10 @@
 
         <div class="input-area">
             <div class="nickname-box">
-                名前: <input type="text" cv-bind="nickname" style="flex: none; width: 100px;" placeholder="なまえ">
+                名前: <input type="text" cv-local="nickname" style="flex: none; width: 100px;" placeholder="なまえ">
             </div>
             <div class="row">
-                <input type="text" cv-bind="msg" placeholder="メッセージを入力..." 
+                <input type="text" cv-local="msg" placeholder="メッセージを入力..." 
                        cv-on="submit: chatLog += nickname + ': ' + msg + '\n'; msg = ''">
                 <button type="button" 
                         cv-on="click: chatLog += nickname + ': ' + msg + '\n'; msg = ''">送信</button>

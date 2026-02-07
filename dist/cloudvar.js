@@ -1,6 +1,6 @@
 /**
  * CloudVar Client SDK
- * Build Date: 2026-02-07T01:47:01.859Z
+ * Build Date: 2026-02-07T01:48:29.789Z
  */
 
 // --- index.js ---
@@ -286,11 +286,17 @@ class CloudVar {
     }
 
     _set(key, value) {
-        // ネットワーク送信は値が変わった時だけ
-        if (this._rawVars[key] !== value) {
-            const payload = { type: 'set', key, value, roomId: this.roomId };
-            if (!this.joined) this._pendingSets.push(payload);
-            else this._network.send(payload);
+        // 現在の値と同じなら何もしない
+        if (this._rawVars[key] === value) return;
+
+        // ネットワーク送信
+        const payload = { type: 'set', key, value, roomId: this.roomId };
+        if (!this.joined) {
+            // 重複を避けてキューに追加
+            this._pendingSets = this._pendingSets.filter(p => p.key !== key);
+            this._pendingSets.push(payload);
+        } else {
+            this._network.send(payload);
         }
 
         this._rawVars[key] = value;

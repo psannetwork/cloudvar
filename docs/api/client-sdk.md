@@ -1,40 +1,44 @@
-# クライアントSDK 詳細リファレンス
+# CloudVar Client SDK API
 
-## コンストラクタ
-`new CloudVar(url, options)`
-- `options.room`: 自動参加するルーム名。
+CloudVar クライアント SDK の内部構造と、JavaScript からの操作方法について説明します。
 
----
+## 核心コンセプト: Proxy 同期
 
-## メソッド
+CloudVar は `Proxy` オブジェクトを使用して、変数の代入をフックしています。
 
-### `onChange(key, callback)`
-- `key` に `"*"` を指定すると、**すべての変数の更新**を監視できます。
-    - `callback(key, value)` という形式で引数を受け取ります。
+```javascript
+const cv = new CloudVar('ws://localhost:5032');
 
-## マジック属性 (Magic Attributes)
-HTML属性だけでロジックを完結させることができます。
+// この代入は Proxy によってキャッチされ、自動的にネットワーク送信されます
+score = 100; 
+```
 
-### `cv-bind="variableName"`
-- **対象**: 全要素
-- **挙動**: 変数の値を要素に同期します。
-    - `innerText` を更新: `<div>`, `<span>`, `<h1>` など
-    - `value` を更新: `<input>`, `<textarea>`, `<select>`
-- **双方向同期**: フォーム要素に入力された値は即座に変数へ反映されます。
+### なぜ `cv.score` ではなく `score` で動くのか？
 
-### `cv-show="variableName"` / `cv-hide="variableName"`
-- **挙動**: 変数が真値（truthy）の時に、要素の `display` スタイルを制御します。
+CloudVar は起動時に HTML（`cv-bind` 等）をスキャンし、見つかった変数名を `window` オブジェクトの Getter/Setter として登録します。これにより、グローバル変数を操作するだけで CloudVar の同期エンジンが作動します。
 
-### `cv-class="variableName: className"`
-- **挙動**: 変数が真値の時に指定したCSSクラスを付与し、偽値の時に削除します。
+## メソッド一覧
 
-### `cv-on="eventName: expression"`
-- **対応イベント**: `click`, `submit` など
-- **利用可能な式 (Expression)**:
-    - `key++` / `key--`: 数値を1増減
-    - `key = value`: 値の代入
-    - `!key`: 真偽値の反転（トグル）
+### `new CloudVar(url, options)`
+インスタンスを作成し、サーバーへ接続します。
+- `url`: WebSocketサーバーのURL
+- `options.room`: 参加するルーム名
 
----
+### `cv.onChange(key, callback)`
+変数が更新された時に実行されるリスナーを登録します。
+- `key`: 変数名。`'*'` を指定すると全ての更新を監視します。
+- `callback`: `(value) => { ... }` または `'*'` の場合は `(key, value) => { ... }`
 
-## メソッド
+## 内部・高度な操作
+
+### `_set(key, value)`
+同期エンジンを直接呼び出します。通常、ユーザーがこれを使う必要はありませんが、`Proxy` を介さない内部モジュール（Binding等）から同期を行いたい場合に役立ちます。
+
+### `_rawVars`
+現在同期されている変数の生の値を保持するオブジェクトです。ここを直接書き換えても **同期は行われません**。
+
+## トラブルシューティング
+
+### 変数が同期されない
+1. **HTMLに存在するか**: `cv-bind` 等で一度も使われていない変数は、自動的にグローバルに紐付きません。その場合は最初に一度だけ `cv.myVar = 0;` のように `cv.` を付けて代入してください。
+2. **既存のグローバル変数**: `name` や `location` などのブラウザ標準の変数名を使うと、競合が発生する場合があります。可能な限り固有の名前（`userNickname` 等）を使用してください。

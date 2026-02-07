@@ -28,4 +28,6 @@ const utils = {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = utils;
 }
-window.CloudVarUtils = utils;
+if (typeof window !== 'undefined') {
+    window.CloudVarUtils = utils;
+}

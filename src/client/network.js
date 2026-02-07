@@ -29,4 +29,6 @@ class Network {
 if (typeof module !== 'undefined') {
     module.exports = Network;
 }
-window.CloudVarNetwork = Network;
+if (typeof window !== 'undefined') {
+    window.CloudVarNetwork = Network;
+}

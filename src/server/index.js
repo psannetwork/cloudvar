@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const http = require('http');
 const WebSocket = require('ws');
 const SyncEngine = require('./sync-engine');

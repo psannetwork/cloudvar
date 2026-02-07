@@ -1,6 +1,6 @@
 /**
  * CloudVar Client SDK
- * Build Date: 2026-02-07T04:25:14.906Z
+ * Build Date: 2026-02-07T04:38:41.276Z
  */
 
 // --- index.js ---
@@ -251,17 +251,14 @@ class CloudVar {
         this.blockList = new Set();
         
         this._rawVars = {};
-        this._pendingSets = [];
+        this._pendingSets = new Map(); // キーごとに最新の待機中の値を保持
         this._listeners = new Map();
 
-        // モジュール初期化
         this._utils = typeof CloudVarUtils !== 'undefined' ? CloudVarUtils : null;
         this._network = new (typeof CloudVarNetwork !== 'undefined' ? CloudVarNetwork : null)(this);
         this._binding = new (typeof CloudVarBinding !== 'undefined' ? CloudVarBinding : null)(this);
 
         this._network.connect();
-
-        // 🌟 HTML内をスキャンして、使われている変数をいきなり使えるようにする
         this._scanAndLink();
 
         return new Proxy(this, {
@@ -286,17 +283,12 @@ class CloudVar {
     }
 
     _set(key, value) {
-        // 現在の値と同じなら何もしない
         if (this._rawVars[key] === value) return;
 
-        // ネットワーク送信
-        const payload = { type: 'set', key, value, roomId: this.roomId };
         if (!this.joined) {
-            // 重複を避けてキューに追加
-            this._pendingSets = this._pendingSets.filter(p => p.key !== key);
-            this._pendingSets.push(payload);
+            this._pendingSets.set(key, value);
         } else {
-            this._network.send(payload);
+            this._network.send({ type: 'set', key, value, roomId: this.roomId });
         }
 
         this._rawVars[key] = value;
@@ -310,13 +302,22 @@ class CloudVar {
                 this.joined = true;
                 this.id = msg.id;
                 this.clientList = msg.clients;
-                Object.assign(this._rawVars, msg.data);
-                while (this._pendingSets.length > 0) this._network.send(this._pendingSets.shift());
-                Object.keys(this._rawVars).forEach(k => {
+
+                // 🌟 サーバーのデータを優先してマージ
+                Object.entries(msg.data).forEach(([k, v]) => {
+                    this._rawVars[k] = v;
                     this._linkToGlobal(k);
-                    this._emit(k, this._rawVars[k]);
-                    this._emit('*', this._rawVars[k], k);
+                    // サーバーにデータがある場合、待機中の初期値（デフォルト値）は破棄する
+                    this._pendingSets.delete(k);
+                    this._emit(k, v);
                 });
+
+                // サーバーになかったデータ（独自の初期値など）だけを送信
+                this._pendingSets.forEach((value, key) => {
+                    this._network.send({ type: 'set', key, value, roomId: this.roomId });
+                });
+                this._pendingSets.clear();
+
                 this._emit('_joined', msg.roomId);
                 break;
             case 'update':
@@ -341,8 +342,6 @@ class CloudVar {
         try {
             const desc = Object.getOwnPropertyDescriptor(window, key);
             if (desc && !desc.configurable) return;
-
-            // 既にCloudVarによって定義済みならスキップ
             if (desc && desc.set && desc.set._isCloudVar) return;
 
             const setter = (val) => this._set(key, val);
@@ -372,13 +371,11 @@ class CloudVar {
         if (typeof document === 'undefined') return;
         const attrs = ['cv-bind', 'cv-show', 'cv-hide', 'cv-class', 'cv-on'];
         const foundVars = new Set();
-        // JSの予約語や既にあるプロパティを除外
-        const reserved = new Set(['true', 'false', 'null', 'undefined', 'click', 'submit', 'window', 'document', 'cv']);
+        const reserved = new Set(['true', 'false', 'null', 'undefined', 'click', 'submit', 'window', 'document', 'cv', 'CloudVar']);
 
         attrs.forEach(attr => {
             document.querySelectorAll(`[${attr}]`).forEach(el => {
                 const val = el.getAttribute(attr);
-                // 🌟 全ての英単語を抽出
                 const matches = val.matchAll(/[a-zA-Z_$][a-zA-Z0-9_$]*/g);
                 for (const match of matches) {
                     const varName = match[0];
@@ -397,6 +394,5 @@ class CloudVar {
 if (typeof window !== 'undefined') {
     window.CloudVar = CloudVar;
 }
-
 })();
 

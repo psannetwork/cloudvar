@@ -1,46 +1,53 @@
 const fs = require('fs');
 const path = require('path');
+const JavaScriptObfuscator = require('javascript-obfuscator');
 
-const clientDir = path.join(__dirname, '../src/client');
-const utilsFile = path.join(__dirname, '../src/utils/index.js');
-const distFile = path.join(__dirname, '../dist/cloudvar.js');
+const srcDir = path.join(__dirname, '../src');
+const distDir = path.join(__dirname, '../dist');
+const distPath = path.join(distDir, 'cloudvar.js');
 
-// 読み込む順番が重要
+if (!fs.existsSync(distDir)) fs.mkdirSync(distDir);
+
+console.log('Building and Obfuscating CloudVar client...');
+
+// 依存順に結合
 const files = [
-    utilsFile,
-    path.join(clientDir, 'network.js'),
-    path.join(clientDir, 'binding.js'),
-    path.join(clientDir, 'index.js')
+    'utils/index.js',
+    'client/network.js',
+    'client/binding.js',
+    'client/index.js'
 ];
 
-console.log('Building CloudVar client...');
+let combinedCode = '';
 
-try {
-    let bundle = `/**
- * CloudVar Client SDK
- * Build Date: ${new Date().toISOString()}
- */
-\n`;
+files.forEach(file => {
+    let content = fs.readFileSync(path.join(srcDir, file), 'utf8');
+    
+    // 不要な Node.js 用コード (exports, require) を正規表現でクリーニング
+    content = content.replace(/const\s+.*\s*=\s*require\(.*\);?/g, '');
+    content = content.replace(/module\.exports\s*=\s*.*;?/g, '');
+    content = content.replace(/if\s*\(typeof\s+module\s*!==\s*'undefined'.*\)\s*\{[\s\S]*?\}/g, '');
+    content = content.replace(/if\s*\(typeof\s+window\s*!==\s*'undefined'.*\)\s*\{([\s\S]*?)\}/g, '$1');
 
-    files.forEach(file => {
-        let content = fs.readFileSync(file, 'utf8');
-        
-        // CJSの module.exports 判定ブロックをまるごと削除 (ifブロック全体)
-        content = content.replace(/if\s*\(typeof\s*module\s*!==\s*'undefined'[\s\S]*?\}\s*/g, '');
-        // インラインの require を含む行、または require 単体を削除
-        content = content.replace(/.*require\(.*\).*\n?/g, '');
-        
-        bundle += `// --- ${path.basename(file)} ---\n`;
-        bundle += `(function(){\n${content}\n})();\n\n`;
-    });
+    combinedCode += `// --- ${file} ---\n${content}\n`;
+});
 
-    if (!fs.existsSync(path.dirname(distFile))) {
-        fs.mkdirSync(path.dirname(distFile));
-    }
+// 全体を即時関数(IIFE)でラップしてスコープを汚染しないようにする
+const finalBundle = `(function(){\n${combinedCode}\n})();`;
 
-    fs.writeFileSync(distFile, bundle);
-    console.log(`Success! Bundle created at: ${distFile}`);
-} catch (err) {
-    console.error('Build failed:', err);
-    process.exit(1);
-}
+// 🌟 難読化の実行
+const obfuscationResult = JavaScriptObfuscator.obfuscate(finalBundle, {
+    compact: true,
+    controlFlowFlattening: true,
+    controlFlowFlatteningThreshold: 0.75,
+    numbersToExpressions: true,
+    simplify: true,
+    stringArrayThreshold: 0.75,
+    splitStrings: true,
+    splitStringsChunkLength: 10,
+    unicodeEscapeSequence: false
+});
+
+fs.writeFileSync(distPath, obfuscationResult.getObfuscatedCode());
+
+console.log(`Success! Obfuscated bundle created at: ${distPath}`);

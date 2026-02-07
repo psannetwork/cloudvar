@@ -28,5 +28,8 @@
   "homepage": "https://github.com/psannetwork/cloudvar#readme",
   "dependencies": {
     "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "javascript-obfuscator": "^5.3.0"
   }
 }

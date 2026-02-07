@@ -3,34 +3,30 @@ const config = require('../config');
 const Room = require('./room');
 
 class SyncEngine {
-    constructor(wss) {
-        this.wss = wss;
-        this.rooms = new Map();
-        this.setupRedis();
+    constructor(rooms) {
+        this.rooms = rooms; // RoomManagerインスタンス
+        this._clientIds = new Map(); // ws -> clientId
     }
 
-    async setupRedis() {
-        if (!config.redis) return;
-        try {
-            const { createClient } = require('redis');
-            this.redisPub = createClient({ url: config.redis });
-            this.redisSub = this.redisPub.duplicate();
-            await Promise.all([this.redisPub.connect(), this.redisSub.connect()]);
-            this.redisSub.subscribe('cloudvar_sync', (message) => {
-                const { roomId, msg, senderId } = JSON.parse(message);
-                const room = this.rooms.get(roomId);
-                if (room) this.broadcast(room, msg, null, senderId);
-            });
-        } catch (e) { console.error("Redis Error:", e); }
+    handle(ws, msg) {
+        let clientId = this._clientIds.get(ws);
+        if (!clientId) {
+            clientId = 'cl_' + Math.random().toString(36).substr(2, 9);
+            this._clientIds.set(ws, clientId);
+        }
+
+        switch (msg.type) {
+            case 'join':
+                this.handleJoin(ws, clientId, msg);
+                break;
+            case 'set':
+                this.handleSet(ws, clientId, msg);
+                break;
+        }
     }
 
     handleJoin(ws, clientId, msg) {
-        let room = this.rooms.get(msg.roomId);
-        
-        if (!room) {
-            room = new Room(msg.roomId, msg.password, (id) => this.rooms.delete(id));
-            this.rooms.set(msg.roomId, room);
-        }
+        const room = this.rooms.getOrCreate(msg.roomId, msg.password);
 
         if (room.password && room.password !== msg.password) {
             return ws.send(JSON.stringify({ type: 'error', message: 'Wrong password' }));
@@ -47,21 +43,31 @@ class SyncEngine {
         }));
 
         this.broadcast(room, { type: 'client_join', id: clientId }, ws);
-        return room;
     }
 
-    broadcast(room, message, senderWs, senderId) {
+    handleSet(ws, clientId, msg) {
+        const room = this.rooms.get(msg.roomId);
+        if (!room || !room.clients.has(clientId)) return;
+
+        room.setVariable(msg.key, msg.value);
+        this.broadcast(room, { type: 'update', key: msg.key, value: msg.value, sender: clientId }, ws);
+    }
+
+    broadcast(room, message, senderWs) {
         const data = JSON.stringify(message);
-        room.clients.forEach((clientWs, clientId) => {
+        room.clients.forEach((clientWs) => {
             if (clientWs === senderWs) return;
-            if (message.target && message.target !== clientId) return;
-            if (clientWs.readyState === WebSocket.OPEN) clientWs.send(data);
+            if (clientWs.readyState === WebSocket.OPEN) {
+                clientWs.send(data);
+            }
         });
     }
 
-    publish(roomId, msg, senderId) {
-        if (this.redisPub) {
-            this.redisPub.publish('cloudvar_sync', JSON.stringify({ roomId, msg, senderId }));
+    removeClient(ws) {
+        const clientId = this._clientIds.get(ws);
+        if (clientId) {
+            this.rooms.leaveAll(clientId);
+            this._clientIds.delete(ws);
         }
     }
 }

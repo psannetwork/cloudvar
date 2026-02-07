@@ -2,7 +2,6 @@ const http = require('http');
 const WebSocket = require('ws');
 const SyncEngine = require('./sync-engine');
 const RoomManager = require('./room');
-const utils = require('../utils');
 
 class CloudVarServer {
     constructor(options = {}) {
@@ -22,12 +21,12 @@ class CloudVarServer {
                     const msg = JSON.parse(data);
                     this.engine.handle(ws, msg);
                 } catch (e) {
-                    console.error('[ERR] Invalid JSON', e);
+                    console.error('[ERR] Invalid JSON or Handle Error', e);
                 }
             });
 
             ws.on('close', () => {
-                this.rooms.leaveAll(ws);
+                this.engine.removeClient(ws);
             });
         });
     }
@@ -40,7 +39,6 @@ class CloudVarServer {
     }
 }
 
-// 直接実行された場合の起動処理
 if (require.main === module) {
     const server = new CloudVarServer();
     server.start();

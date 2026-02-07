@@ -1,6 +1,6 @@
 /**
  * CloudVar Client SDK
- * Build Date: 2026-02-07T01:30:47.910Z
+ * Build Date: 2026-02-07T01:41:56.456Z
  */
 
 // --- index.js ---
@@ -235,7 +235,7 @@ class CloudVar {
                 if (typeof key === 'string' && (key.startsWith('_') || key in target)) {
                     target[key] = value; return true;
                 }
-                if (!(key in window) && typeof key === 'string') target._linkToGlobal(key);
+                if (typeof key === 'string') target._linkToGlobal(key);
                 target._set(key, value);
                 return true;
             }
@@ -265,14 +265,14 @@ class CloudVar {
                 Object.assign(this._rawVars, msg.data);
                 while (this._pendingSets.length > 0) this._network.send(this._pendingSets.shift());
                 Object.keys(this._rawVars).forEach(k => {
-                    if(!(k in window)) this._linkToGlobal(k);
+                    this._linkToGlobal(k);
                     this._emit(k, this._rawVars[k]);
                     this._emit('*', this._rawVars[k], k);
                 });
                 this._emit('_joined', msg.roomId);
                 break;
             case 'update':
-                if (!(msg.key in window)) this._linkToGlobal(msg.key);
+                this._linkToGlobal(msg.key);
                 this._rawVars[msg.key] = msg.value;
                 this._emit(msg.key, msg.value);
                 this._emit('*', msg.value, msg.key);
@@ -289,11 +289,24 @@ class CloudVar {
     }
 
     _linkToGlobal(key) {
-        Object.defineProperty(window, key, {
-            get: () => this._rawVars[key],
-            set: (val) => this._set(key, val),
-            configurable: true
-        });
+        if (typeof window === 'undefined') return;
+        try {
+            const desc = Object.getOwnPropertyDescriptor(window, key);
+            if (desc && !desc.configurable) return;
+
+            // 既にCloudVarによって定義済みならスキップ
+            if (desc && desc.set && desc.set._isCloudVar) return;
+
+            const setter = (val) => this._set(key, val);
+            setter._isCloudVar = true;
+
+            Object.defineProperty(window, key, {
+                get: () => this._rawVars[key],
+                set: setter,
+                configurable: true,
+                enumerable: true
+            });
+        } catch (e) {}
     }
 
     _emit(key, value, extra) {
@@ -327,10 +340,8 @@ class CloudVar {
         });
 
         foundVars.forEach(varName => {
-            if (!(varName in window)) {
-                this._linkToGlobal(varName);
-                if (this._rawVars[varName] === undefined) this._rawVars[varName] = undefined;
-            }
+            this._linkToGlobal(varName);
+            if (this._rawVars[varName] === undefined) this._rawVars[varName] = undefined;
         });
     }
 }

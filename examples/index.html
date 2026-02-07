@@ -40,6 +40,12 @@
         // サーバーに接続（これだけでチャットが機能する）
         const cv = new CloudVar('ws://localhost:5032', { room: 'chat-room' });
 
+        // 🌟 ログが更新されたら一番下までスクロールする
+        cv.onChange('chatLog', () => {
+            const el = document.querySelector('.messages');
+            el.scrollTop = el.scrollHeight;
+        });
+
         // 初期値の設定
         nickname = nickname || "ゲスト" + Math.floor(Math.random() * 1000);
         chatLog = chatLog || "--- チャットへようこそ ---\n";

@@ -1,6 +1,6 @@
 /**
  * CloudVar Client SDK
- * Build Date: 2026-02-07T01:10:23.748Z
+ * Build Date: 2026-02-07T01:13:08.930Z
  */
 
 // --- index.js ---
@@ -91,7 +91,6 @@ class Binding {
         });
 
         document.addEventListener('click', (e) => this.handleEvent(e, 'click'));
-        // フォーム送信時はページ遷移を防止して式を評価
         document.addEventListener('submit', (e) => this.handleEvent(e, 'submit'));
 
         window.addEventListener('DOMContentLoaded', () => this.scan());
@@ -102,7 +101,10 @@ class Binding {
         if (!target) return;
 
         const attr = target.getAttribute('cv-on');
-        const expressions = attr.split(':')[1].split(';'); // セミコロンで分割
+        // 🌟 最初のコロン以降をすべて式として取得する
+        const firstColonIndex = attr.indexOf(':');
+        const expressionPart = attr.substring(firstColonIndex + 1);
+        const expressions = expressionPart.split(';');
 
         e.preventDefault();
         expressions.forEach(expr => this.evaluate(expr.trim()));
@@ -110,18 +112,6 @@ class Binding {
 
     evaluate(expr) {
         if (!expr) return;
-
-        // score++ / score--
-        if (expr.endsWith('++')) {
-            const key = expr.slice(0, -2).trim();
-            this.sdk[key] = (Number(this.sdk[key]) || 0) + 1;
-            return;
-        }
-        if (expr.endsWith('--')) {
-            const key = expr.slice(0, -2).trim();
-            this.sdk[key] = (Number(this.sdk[key]) || 0) - 1;
-            return;
-        }
 
         // key += value (追記)
         if (expr.includes('+=')) {
@@ -138,22 +128,27 @@ class Binding {
             return;
         }
 
-        // toggle !key
-        if (expr.startsWith('!')) {
+        // ++ / --
+        if (expr.endsWith('++')) {
+            const key = expr.slice(0, -2).trim();
+            this.sdk[key] = (Number(this.sdk[key]) || 0) + 1;
+        } else if (expr.endsWith('--')) {
+            const key = expr.slice(0, -2).trim();
+            this.sdk[key] = (Number(this.sdk[key]) || 0) - 1;
+        } else if (expr.startsWith('!')) {
             const key = expr.slice(1).trim();
             this.sdk[key] = !this.sdk[key];
         }
     }
 
-    // 文字列、数値、または他の変数名を解決
     resolveValue(valExpr) {
         // 文字列定数 'hello' "world"
         if (/^['"].*['"]$/.test(valExpr)) {
             return valExpr.replace(/^['"]|['"]$/g, '');
         }
-        // 他の変数名
-        if (this.sdk._rawVars[valExpr] !== undefined) {
-            return this.sdk._rawVars[valExpr];
+        // 他の変数名 (Proxy経由で取得)
+        if (this.sdk[valExpr] !== undefined) {
+            return this.sdk[valExpr];
         }
         // 数値
         if (!isNaN(Number(valExpr))) {
@@ -183,12 +178,8 @@ class Binding {
     }
 
     updateShowHide(key, value) {
-        document.querySelectorAll(`[cv-show="${key}"]`).forEach(el => {
-            el.style.display = value ? '' : 'none';
-        });
-        document.querySelectorAll(`[cv-hide="${key}"]`).forEach(el => {
-            el.style.display = value ? 'none' : '';
-        });
+        document.querySelectorAll(`[cv-show="${key}"]`).forEach(el => el.style.display = value ? '' : 'none');
+        document.querySelectorAll(`[cv-hide="${key}"]`).forEach(el => el.style.display = value ? 'none' : '');
     }
 
     updateClass(key, value) {
@@ -201,7 +192,6 @@ class Binding {
 }
 
 window.CloudVarBinding = Binding;
-
 })();
 
 // --- index.js ---

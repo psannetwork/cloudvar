@@ -24,8 +24,8 @@ npm start
 表示したい部分に `cv-bind` 属性を付けるだけ。JSで表示を書き換えるコードは不要です。
 
 ```html
-<!-- SDKを読み込む -->
-<script src="https://github.com/psannetwork/cloudvar/releases/download/V2.0/cloudvar.js"></script>
+<!-- ダウンロードした cloudvar.js を読み込む -->
+<script src="cloudvar.js"></script>
 
 <!-- 表示用 -->
 <h1>Score: <span cv-bind="score">0</span></h1>

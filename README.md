@@ -29,16 +29,17 @@ WebSocketの実装も、イベントリスナーも、状態管理も、もう�
 - **ハイブリッド設計**: サーバー経由の安定した通信（WebSocket）と、超低遅延なP2P通信（WebRTC）をサポート。
 - **どこでも動く**: Vanilla JS、React、Vue、jQuery... どんな環境でも `<script>` タグ1つで動作します。
 
-## 📦 インストール
+## 📦 セットアップ
 
-### 方法 A: CDNで今すぐ使う (推奨)
+### 1. SDKをダウンロード
+最新の `cloudvar.js` をダウンロードして、あなたのプロジェクトフォルダに配置してください。
+
+👉 [**cloudvar.js をダウンロード (V2.0)**](https://github.com/psannetwork/cloudvar/releases/download/V2.0/cloudvar.js)
+
+### 2. HTMLで読み込む
 ```html
-<script src="https://github.com/psannetwork/cloudvar/releases/download/V2.0/cloudvar.js"></script>
-```
-
-### 方法 B: npm でインストール
-```bash
-npm install cloudvar
+<!-- 配置した cloudvar.js を読み込む -->
+<script src="cloudvar.js"></script>
 ```
 
 ## 🛠 クイックスタート
@@ -50,7 +51,7 @@ npm install cloudvar
 <html>
 <body>
     <!-- SDKを読み込む -->
-    <script src="https://github.com/psannetwork/cloudvar/releases/download/V2.0/cloudvar.js"></script>
+    <script src="cloudvar.js"></script>
 
     <!-- 表示エリア -->
     <pre cv-bind="todoList"></pre>

@@ -40,6 +40,43 @@ CloudVarの `cv-on` 属性内で使用できる「式評価エンジン」の完
 - **`UNSYNC(varName)`**: 指定した変数の同期を解除します。
   - `cv-on="click: UNSYNC('secretData')"`
 
+## 複数インスタンスとスコープ (`cv-app`)
+
+1つのページ内で複数の `CloudVar` インスタンスを独立して動かすことができます。
+
+### JavaScript側
+インスタンス作成時に `name` オプションを指定します。
+
+```javascript
+// 名前付きインスタンス
+const chat = new CloudVar('wss://...', { name: 'chatApp', room: 'chat' });
+const game = new CloudVar('wss://...', { name: 'gameApp', room: 'game' });
+
+// ⚠️ 名前付きインスタンスはグローバル変数 (window.score等) を作成しません。
+// インスタンス変数経由で操作してください。
+chat.msg = "Hello";
+game.score++;
+```
+
+### HTML側
+`cv-app` 属性を使って、要素がどのインスタンスに属しているかを指定します。
+
+```html
+<!-- chatApp インスタンスに紐付く -->
+<div cv-app="chatApp">
+    <input cv-bind="msg">
+</div>
+
+<!-- gameApp インスタンスに紐付く -->
+<div cv-app="gameApp">
+    <h1 cv-bind="score">0</h1>
+</div>
+
+<!-- 名前なし（デフォルト）の要素。
+     nameを指定せずに作成された CloudVar インスタンスと紐付きます。 -->
+<div cv-bind="globalData"></div>
+```
+
 ## 状態による表示の制御 (Reactive UI)
 
 CloudVarは変数の値が変わった瞬間、関係するすべての属性を自動的に再計算します。

@@ -7,15 +7,13 @@ class Binding {
     setup() {
         if (typeof document === 'undefined') return;
 
-        // このインスタンスでの変更をDOMに反映
         this.sdk.onChange('*', (key, value) => {
             this.updateAll(key, value);
         });
 
         document.addEventListener('input', (e) => {
             const key = e.target.getAttribute('cv-bind') || e.target.getAttribute('cv-local');
-            if (key) {
-                // 最後に操作された入力欄に紐づくインスタンスが値をセットする
+            if (key && this.belongsToMe(e.target)) {
                 if (this.sdk._set) this.sdk._set(key, e.target.value);
                 else this.sdk[key] = e.target.value;
             }
@@ -24,27 +22,23 @@ class Binding {
         document.addEventListener('click', (e) => this.handleEvent(e, 'click'));
         document.addEventListener('submit', (e) => this.handleEvent(e, 'submit'), true);
 
-        // 初回スキャン
         if (document.readyState === 'complete') this.scan();
         else window.addEventListener('DOMContentLoaded', () => this.scan());
+    }
+
+    // 🌟 ターゲット要素がこのインスタンスに属しているか判定
+    belongsToMe(el) {
+        const appParent = el.closest('[cv-app]');
+        const targetAppName = appParent ? appParent.getAttribute('cv-app') : null;
+        // インスタンス名とcv-app名が一致、または両方なしなら一致
+        return targetAppName === this.sdk.name;
     }
 
     handleEvent(e, eventName) {
         const target = (e.target.closest && e.target.closest(`[cv-on^="${eventName}:"]`)) || 
                      (e.currentTarget && e.currentTarget.getAttribute && e.currentTarget.getAttribute('cv-on')?.startsWith(eventName + ':') ? e.currentTarget : null);
         
-        if (!target) {
-            let el = e.target;
-            while (el && el.getAttribute) {
-                const attr = el.getAttribute('cv-on');
-                if (attr && attr.startsWith(eventName + ':')) {
-                    this._executeEvent(e, el);
-                    return;
-                }
-                el = el.parentElement;
-            }
-            return;
-        }
+        if (!target || !this.belongsToMe(target)) return;
 
         this._executeEvent(e, target);
     }
@@ -142,38 +136,37 @@ class Binding {
     scan() {
         const vars = this.sdk._rawVars || {};
         Object.keys(vars).forEach(key => this.updateAll(key, vars[key]));
-        // システム変数の初期反映
         this.updateAll('ID', this.sdk.ID);
         this.updateAll('ROOM', this.sdk.ROOM);
         this.updateAll('COUNT', this.sdk.COUNT);
     }
 
     updateAll(key, value) {
-        this.updateBind(key, value);
-        this.updateShowHide(key, value);
-        this.updateClass(key, value);
-    }
-
-    updateBind(key, value) {
+        // 自分に属する要素だけを更新
         document.querySelectorAll(`[cv-bind="${key}"], [cv-local="${key}"]`).forEach(el => {
-            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)) {
-                if (el.value !== String(value)) el.value = value;
-            } else {
-                if (el.innerText !== String(value)) el.innerText = value;
+            if (this.belongsToMe(el)) {
+                if (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)) {
+                    if (el.value !== String(value)) el.value = value;
+                } else {
+                    if (el.innerText !== String(value)) el.innerText = value;
+                }
             }
         });
-    }
 
-    updateShowHide(key, value) {
-        document.querySelectorAll(`[cv-show="${key}"]`).forEach(el => el.style.display = value ? '' : 'none');
-        document.querySelectorAll(`[cv-hide="${key}"]`).forEach(el => el.style.display = value ? 'none' : '');
-    }
+        document.querySelectorAll(`[cv-show="${key}"]`).forEach(el => {
+            if (this.belongsToMe(el)) el.style.display = value ? '' : 'none';
+        });
 
-    updateClass(key, value) {
+        document.querySelectorAll(`[cv-hide="${key}"]`).forEach(el => {
+            if (this.belongsToMe(el)) el.style.display = value ? 'none' : '';
+        });
+
         document.querySelectorAll(`[cv-class^="${key}:"]`).forEach(el => {
-            const className = el.getAttribute('cv-class').split(':')[1].trim();
-            if (value) el.classList.add(className);
-            else el.classList.remove(className);
+            if (this.belongsToMe(el)) {
+                const className = el.getAttribute('cv-class').split(':')[1].trim();
+                if (value) el.classList.add(className);
+                else el.classList.remove(className);
+            }
         });
     }
 }

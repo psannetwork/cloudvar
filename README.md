@@ -1,75 +1,91 @@
 # ☁️ CloudVar
+> **「書かない」リアルタイム同期フレームワーク。**  
+> 変数を宣言するだけで、世界中のブラウザと同期します。
 
-**「書かない」リアルタイム同期フレームワーク。**  
-HTML属性を書くだけで、JavaScript変数が世界中のブラウザと一瞬で同期します。
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/version-2.0-blue.svg)](https://github.com/psannetwork/cloudvar/releases)
 
-## ✨ 特徴
+---
 
-- **マジック属性**: `cv-bind`, `cv-on` など、HTML属性だけでリアルタイム機能を実装。
-- **ゼロ・コンフィグ**: 変数の宣言は不要。HTMLに書いた瞬間にグローバル変数として同期対象になります。
-- **ノンブロッキング**: ネットワーク接続を待たずに代入可能。接続後に自動で同期されます。
-- **ハイブリッド設計**: クライアントSDKとしても、スタンドアロンサーバーとしても、npmライブラリとしても動作。
+**JavaScriptを書くのは、もう終わりにしましょう。**  
+CloudVarは、HTML属性（マジック属性）だけでリアルタイム通信を実現する、次世代の同期エンジンです。  
+WebSocketの実装も、イベントリスナーも、状態管理も、もう必要ありません。
 
-## 🚀 クイックスタート (Client)
-
-HTMLで `cloudvar.js` を読み込み、変数を書くだけ。
+## ✨ 魔法のような体験
 
 ```html
-<script src="https://github.com/psannetwork/cloudvar/releases/download/V2.0/cloudvar.js"></script>
-
-<!-- 表示と入力が同期 -->
-<h1 cv-bind="score">0</h1>
-<input type="number" cv-bind="score">
-
-<!-- ボタンで操作 -->
-<button cv-on="click: score++">プラス</button>
-
-<script>
-  // これだけで接続完了！
-  const cv = new CloudVar('ws://your-server:5032', {
-    room: 'my-room',
-    mode: 'p2p' // 'ws' (デフォルト) または 'p2p' (WebRTC)
-  });
-  
-  // JavaScriptからも普通に触れる
-  setInterval(() => score++, 1000);
-</script>
+<!-- たったこれだけ。入力した文字が、世界中の画面で同期されます -->
+<input type="text" cv-bind="message">
+<h1><span cv-bind="message"></span></h1>
 ```
 
-## 🛠 サーバーの起動
+あなたが `input` に文字を打った瞬間、地球の裏側にいる誰かの画面の `h1` が書き換わります。  
+**JavaScriptは1行も書いていません。**
 
-### 方法 A: CLIで起動
-```bash
-npx cloudvar-server
-```
+## 🚀 なぜ CloudVar なのか？
 
-### 方法 B: 既存のNode.jsアプリに組み込む
-```javascript
-const CloudVarServer = require('cloudvar');
-const server = new CloudVarServer({ port: 5032 });
-server.start();
-```
-
-## 📖 マジック属性リファレンス
-
-| 属性 | 説明 | 例 |
-|:---|:---|:---|
-| `cv-bind` | テキストまたは入力値と同期 | `cv-bind="name"` |
-| `cv-on` | イベント時に式を評価 | `cv-on="click: score++"` |
-| `cv-show` | 値が真の時に表示 | `cv-show="isAdmin"` |
-| `cv-hide` | 値が真の時に非表示 | `cv-hide="isMuted"` |
-| `cv-class` | 値が真の時にクラスを付与 | `cv-class="active: highlight"` |
+- **ゼロ・コンフィグ**: サーバー設定も、変数の定義も不要。HTMLに書いた変数が自動的にクラウド化されます。
+- **超高速開発**: チャットアプリが3分、マルチプレイヤーゲームが10分で作れます。
+- **ハイブリッド設計**: サーバー経由の安定した通信（WebSocket）と、超低遅延なP2P通信（WebRTC）をサポート。
+- **どこでも動く**: Vanilla JS、React、Vue、jQuery... どんな環境でも `<script>` タグ1つで動作します。
 
 ## 📦 インストール
 
+### 方法 A: CDNで今すぐ使う (推奨)
+```html
+<script src="https://github.com/psannetwork/cloudvar/releases/download/V2.0/cloudvar.js"></script>
+```
+
+### 方法 B: npm でインストール
 ```bash
 npm install cloudvar
 ```
 
+## 🛠 クイックスタート
+
+5分で「共有ToDoリスト」を作ってみましょう。
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+    <!-- SDKを読み込む -->
+    <script src="https://github.com/psannetwork/cloudvar/releases/download/V2.0/cloudvar.js"></script>
+
+    <!-- 表示エリア -->
+    <pre cv-bind="todoList"></pre>
+
+    <!-- 入力エリア（cv-localは同期しない自分だけの変数） -->
+    <input cv-local="task" placeholder="タスクを入力">
+    
+    <!-- ボタン（BRは改行を表す特殊キーワード） -->
+    <button cv-on="click: todoList += '・' + task + BR; task = ''">追加</button>
+
+    <script>
+        // サーバーに接続（これだけで完了！）
+        const cv = new CloudVar('wss://cloudvar.psannetwork.net', { room: 'my-todo' });
+        
+        // 初期値の設定（任意）
+        todoList = todoList || "--- ToDoリスト ---\n";
+    </script>
+</body>
+</html>
+```
+
+## 📚 ドキュメント & サンプル
+
+- [**公式ドキュメント**](./docs/README.md): 全機能の解説とAPIリファレンス
+- [**サンプル集**](./examples/index.html): チャット、ゲーム、ホワイトボードなどの実装例
+- [**逆引きレシピ**](./docs/README.md#💡-逆引きレシピ): 「これどうやるの？」への回答
+
 ## 🤝 貢献 (Contribution)
 
-CloudVar はオープンソースプロジェクトです。バグ報告や機能提案、プルリクエストを歓迎します！
+CloudVar はオープンソースプロジェクトです。  
+バグ報告、機能提案、プルリクエストを歓迎します！  
 詳しくは [CONTRIBUTING.md](./CONTRIBUTING.md) をご覧ください。
 
 ## 📜 ライセンス
 MIT (See [LICENSE](./LICENSE))
+
+---
+Copyright (c) 2026 PSAN Network

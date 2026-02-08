@@ -8,6 +8,7 @@ CloudVarは、一切のコードを書かずにリアルタイム体験を作る
 3. [高度な使い方と式評価](./guide/advanced.md) - BRキーワードや複雑なロジック
 4. [ルームとデータ分離](./guide/rooms.md) - 部屋の概念とデータの独立性
 5. [P2PとWebSocket](./guide/getting-started.md#⚡️-同期モードの切り替え) - 通信モードの選択
+6. [トラブルシューティング](./guide/troubleshooting.md) - よくある質問と解決策
 
 ## 🛠 APIリファレンス
 - [Client SDK API](./api/client-sdk.md) - JSからの操作

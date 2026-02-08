@@ -1,57 +1,79 @@
-# オートバインド (cv-bind) と HTMLロジック
+# マジック属性 (Magic Attributes)
 
-JavaScriptを書かずに、HTML属性だけでアプリケーションのロジックを構築できます。
+CloudVarの核心であるHTML属性の使い方です。これらを組み合わせるだけで、JavaScriptを書かずにアプリを作れます。
 
-## 1. データの表示・同期
-`cv-bind` を使うと、変数の値が表示され、入力フォームでは双方向に同期されます。
+## `cv-bind`
+変数の値を要素に同期します。双方向バインディング（入力⇔変数）と単方向バインディング（変数⇒表示）の両方に対応しています。
 
 ```html
-<h1 cv-bind="score">0</h1>
-<input cv-bind="username">
+<!-- 入力フォーム: 入力した内容が変数 'message' に即座に反映されます -->
+<input type="text" cv-bind="message">
+
+<!-- テキスト表示: 変数 'message' の内容が表示されます -->
+<p>入力内容: <span cv-bind="message"></span></p>
 ```
 
-## 2. 表示の切り替え (cv-show / cv-hide)
-変数の値（真偽値）によって、要素を表示したり隠したりします。
+## `cv-local`
+`cv-bind` と同じですが、**サーバーへの送信を行いません**。
+入力中の下書きや、自分だけの状態管理に使用します。
 
 ```html
-<!-- isGameover が true の時だけ表示 -->
-<div cv-show="isGameover">
-    GAME OVER
-</div>
-
-<!-- isLogin が true の時は隠す -->
-<button cv-hide="isLogin">ログイン</button>
+<!-- 入力中は送信されず、送信ボタンを押した時だけ送る例 -->
+<input type="text" cv-local="draft">
+<button cv-on="click: message = draft; draft = ''">送信</button>
 ```
 
-## 3. スタイルの切り替え (cv-class)
-変数が `true` の時だけ、指定したCSSクラスを適用します。
+## `cv-on`
+イベントが発生したときに、属性内の式を実行します。
+形式: `イベント名: 式1; 式2; ...`
 
 ```html
-<!-- isActive が true なら "active-btn" クラスをつける -->
-<button cv-class="isActive: active-btn">押してね</button>
-```
-
-## 4. イベント処理 (cv-on)
-**これぞ究極の手抜き！** JavaScriptの `onclick` すら書かずに変数を操作できます。
-
-### 構文
-`cv-on="イベント名: 式"`
-
-### 使える式の例
-- `score++`: 数値を1増やす
-- `score--`: 数値を1減らす
-- `isActive = true`: 値を代入する
-- `!isActive`: true/falseを反転（トグル）
-
-```html
-<!-- クリックでスコア加算 -->
+<!-- クリックでスコアを加算 -->
 <button cv-on="click: score++">点数アップ</button>
 
-<!-- クリックで表示切り替え -->
-<button cv-on="click: !isVisible">表示トグル</button>
+<!-- フォーム送信時にチャットログに追加して送信 -->
+<form cv-on="submit: log += msg + BR; msg = ''">...</form>
+```
 
-<!-- 送信で名前セット -->
-<form cv-on="submit: isSent = true">
-    ...
-</form>
+### 使える式とキーワード
+- **代入・計算**: `=`, `+=`, `++`, `--`, `!`
+- **システム定数**:
+  - `ID`: 自分のID
+  - `COUNT`: 接続人数
+  - `TIME`: 現在時刻 (ミリ秒)
+  - `RAND`: 0〜1のランダム値
+  - `BR`: 改行コード
+- **命令**:
+  - `ALERT('msg')`: アラート表示
+  - `LOG('msg')`: コンソールログ
+  - `UNSYNC('key')`: 同期解除
+
+## `cv-show` / `cv-hide`
+変数の値が真（True/値あり）か偽（False/空）かによって、要素の表示/非表示を切り替えます。
+
+```html
+<!-- 管理者フラグがONのときだけ表示 -->
+<div cv-show="isAdmin">管理者メニュー</div>
+
+<!-- ロード中は隠す -->
+<div cv-hide="isLoading">コンテンツ</div>
+```
+
+## `cv-class`
+条件によってCSSクラスを付け外しします。
+形式: `条件変数: クラス名`
+
+```html
+<!-- isOnline が真なら 'active' クラスをつける -->
+<div class="status-dot" cv-class="isOnline: active"></div>
+```
+
+## `cv-app`
+複数の CloudVar インスタンスを使い分ける場合に使用します。
+
+```html
+<!-- 'game' インスタンスの変数を扱う -->
+<div cv-app="game">
+  <span cv-bind="score"></span>
+</div>
 ```

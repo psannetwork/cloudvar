@@ -50,4 +50,9 @@ const obfuscationResult = JavaScriptObfuscator.obfuscate(finalBundle, {
 
 fs.writeFileSync(distPath, obfuscationResult.getObfuscatedCode());
 
+// 🌟 examples ディレクトリにもコピー
+const exampleDistPath = path.join(__dirname, '../examples/cloudvar.js');
+fs.copyFileSync(distPath, exampleDistPath);
+
 console.log(`Success! Obfuscated bundle created at: ${distPath}`);
+console.log(`Copied to: ${exampleDistPath}`);

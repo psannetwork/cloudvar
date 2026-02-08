@@ -17,13 +17,9 @@
     </style>
 </head>
 <body>
-
     <div class="chat-container">
         <div class="header">☁️ CloudVar Realtime Chat</div>
-        
-        <!-- チャットログの表示 -->
         <div class="messages" cv-bind="chatLog"></div>
-
         <div class="input-area">
             <div class="nickname-box">
                 名前: <input type="text" cv-local="nickname" style="flex: none; width: 100px;" placeholder="なまえ">
@@ -36,23 +32,15 @@
             </div>
         </div>
     </div>
-
-    <script src="https://github.com/psannetwork/cloudvar/releases/download/V2.0/cloudvar.js"></script>
+    <script src="../cloudvar.js"></script>
     <script>
         const cv = new CloudVar('ws://localhost:5032', { room: 'chat-room' });
-
-        // 自動スクロール
         cv.onChange('chatLog', () => {
             const el = document.querySelector('.messages');
             el.scrollTop = el.scrollHeight;
         });
-
-        // 🌟 HTMLにある変数は、この時点で定義済み。
-        // 未定義チェック(typeof)をしてから初期値を代入。
         if (typeof nickname === 'undefined' || nickname === null) nickname = "ゲスト" + Math.floor(Math.random() * 1000);
         if (typeof chatLog === 'undefined' || chatLog === null) chatLog = "--- チャットへようこそ ---\n";
-        
-        // メッセージ入力欄も空で初期化
         msg = "";
     </script>
 </body>

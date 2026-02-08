@@ -25,7 +25,7 @@
         <button style="margin-top: 10px; width: 100%;" cv-on="click: todoList = ''">全てクリア</button>
     </div>
 
-    <script src="https://github.com/psannetwork/cloudvar/releases/download/V2.0/cloudvar.js"></script>
+    <script src="../cloudvar.js"></script>
     <script>
         const cv = new CloudVar('ws://localhost:5032', { room: 'shared-todo' });
         todoList = todoList || "・サーバーを立てる

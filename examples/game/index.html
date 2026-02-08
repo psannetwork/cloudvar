@@ -19,7 +19,7 @@
         接続中のヒーロー: <span cv-bind="_clientCount">0</span>人
     </div>
 
-    <script src="https://github.com/psannetwork/cloudvar/releases/download/V2.0/cloudvar.js"></script>
+    <script src="../cloudvar.js"></script>
     <script>
         const cv = new CloudVar('ws://localhost:5032', { room: 'clicker-game' });
         totalClicks = totalClicks || 0;

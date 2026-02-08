@@ -18,20 +18,26 @@ class CloudVar {
 
         this._network.connect();
         
-        // 🌟 初期化を確実にする
+        // 🌟 待たずに即スキャン（既にパース済みの要素を対象にする）
         if (typeof document !== 'undefined') {
-            if (document.readyState === 'complete') this._scanAndLink();
-            else window.addEventListener('DOMContentLoaded', () => this._scanAndLink());
+            this._scanAndLink();
+            // 念のため完了時にもう一度（後続要素のため）
+            window.addEventListener('DOMContentLoaded', () => this._scanAndLink());
         }
 
         return new Proxy(this, {
             get: (target, key) => {
-                if (key === 'ID') return target.id || '';
+                // 🌟 システム定数・変数の提供
+                if (key === 'BR') return '\n';
+                if (key === 'TIME') return Date.now();
+                if (key === 'RAND') return Math.random();
+                if (key === 'ID') return target.id || 'connecting...';
                 if (key === 'ROOM') return target.roomId || '';
                 if (key === 'COUNT') return target.clientList.length;
                 if (key === 'varList') return target.varList;
+
                 if (key in target || typeof key === 'symbol') return target[key];
-                return target._rawVars[key];
+                return target._rawVars[key] !== undefined ? target._rawVars[key] : "";
             },
             set: (target, key, value) => {
                 if (typeof key === 'string' && key in target && !key.startsWith('_')) {
@@ -84,9 +90,7 @@ class CloudVar {
                     this._network.send({ type: 'set', key, value, roomId: this.roomId });
                 });
                 this._pendingSets.clear();
-                this._emit('ID', this.id);
-                this._emit('ROOM', this.roomId);
-                this._emit('COUNT', this.clientList.length);
+                ['ID','ROOM','COUNT'].forEach(k => this._emit(k, this[k]));
                 this._emit('_joined', msg.roomId);
                 break;
             case 'update':
@@ -142,10 +146,13 @@ class CloudVar {
         const foundVars = new Set();
         const reserved = new Set(['true', 'false', 'null', 'undefined', 'click', 'submit', 'window', 'document', 'cv', 'CloudVar']);
 
+        // システム定数も強制的にリンク対象にする
+        ['BR', 'ID', 'ROOM', 'COUNT', 'TIME', 'RAND'].forEach(v => foundVars.add(v));
+
         document.querySelectorAll('[cv-local]').forEach(el => {
             if (this._binding.belongsToMe(el)) {
                 const varName = el.getAttribute('cv-local');
-                if (varName) this._localVars.add(varName);
+                if (varName) foundVars.add(varName);
             }
         });
 
@@ -164,12 +171,8 @@ class CloudVar {
 
         foundVars.forEach(varName => {
             if (!this.name) this._linkToGlobal(varName);
-            // 🌟 ID, COUNT などのシステム変数や undefined の変数を安全に初期化
-            if (['ID','ROOM'].includes(varName)) return; // これらはgetterで返すのでrawVarsには入れない
-            if (['COUNT','TIME','RAND'].includes(varName)) return;
-
-            if (this._rawVars[varName] === undefined) {
-                this._rawVars[varName] = ""; // undefined ではなく空文字で初期化
+            if (this._rawVars[varName] === undefined && !['BR','ID','COUNT','ROOM','TIME','RAND'].includes(varName)) {
+                this._rawVars[varName] = "";
             }
         });
     }

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>CloudVar - System Magic Chips</title>
+    <style>
+        body { font-family: 'Courier New', Courier, monospace; background: #000; color: #0f0; padding: 20px; line-height: 1.4; }
+        .dashboard { border: 1px solid #0f0; padding: 20px; margin-bottom: 20px; background: #020; }
+        .log-area { height: 300px; overflow-y: auto; border: 1px solid #0f0; padding: 10px; background: #000; white-space: pre-wrap; font-size: 0.9em; }
+        .magic-btn { background: #0f0; color: #000; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; margin: 5px; }
+        .magic-btn:hover { background: #0a0; }
+        .label { color: #8f8; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>🛰 SYSTEM DASHBOARD</h1>
+    
+    <div class="dashboard">
+        <div><span class="label">MY_ID:</span> <span cv-bind="myID">取得中...</span></div>
+        <div><span class="label">ROOM:</span> <span cv-bind="roomName">---</span></div>
+        <div><span class="label">ONLINE:</span> <span cv-bind="userCount">0</span> 人のヒーローが接続中</div>
+        <div><span class="label">LAST_ACTION:</span> <span cv-bind="lastTime">なし</span></div>
+    </div>
+
+    <div class="log-area" cv-bind="systemLog">システムログ待機中...</div>
+
+    <div style="margin-top: 20px;">
+        <!-- 命令チップ (ALERT, LOG) と値チップ (ID, TIME, BR) の組み合わせ -->
+        <button class="magic-btn" cv-on="click: systemLog += '[' + TIME + '] ' + ID + ' がシグナルを送信' + BR; lastTime = TIME; LOG('Signal sent by ' + ID)">
+            シグナルを送信 (LOG)
+        </button>
+        
+        <button class="magic-btn" cv-on="click: ALERT('あなたのIDは ' + ID + ' です。現在 ' + COUNT + ' 人がこの部屋にいます。')">
+            ステータス確認 (ALERT)
+        </button>
+    </div>
+
+    <script src="../cloudvar.js"></script>
+    <script>
+        // 接続
+        const cv = new CloudVar('wss://cloudvar.psannetwork.net', { room: 'magic-system-demo' });
+
+        // チップの値を定期的に反映させる（接続完了を待ってから）
+        cv.onChange('_joined', () => {
+            myID = cv.id;
+            roomName = cv.roomId;
+            systemLog = systemLog || "--- LOG START ---" + BR;
+        });
+
+        // 接続人数のリアルタイム更新
+        const updateStats = () => {
+            userCount = cv.clientList.length;
+        };
+        cv.onChange('_client_join', updateStats);
+        cv.onChange('_client_leave', updateStats);
+        cv.onChange('_joined', updateStats);
+    </script>
+</body>
+</html>

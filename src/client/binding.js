@@ -101,6 +101,9 @@ class Binding {
     resolveValue(valExpr) {
         if (!valExpr) return "";
         
+        // 🌟 改行の別名 'BR' をサポート
+        if (valExpr === 'BR') return '\n';
+
         // 文字列の足し算
         if (valExpr.includes('+')) {
             return valExpr.split('+').map(part => this.resolveValue(part.trim())).join('');

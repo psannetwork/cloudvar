@@ -18,7 +18,7 @@
         
         <div class="input-group">
             <input type="text" cv-local="newItem" placeholder="新しいタスク...">
-            <button type="button" cv-on="click: todoList += '・' + newItem + '\\n'; newItem = ''">追加</button>
+            <button type="button" cv-on="click: todoList += '・' + newItem + BR; newItem = ''">追加</button>
         </div>
         <button style="margin-top: 10px; width: 100%;" cv-on="click: todoList = ''">全てクリア</button>
     </div>

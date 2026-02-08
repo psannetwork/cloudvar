@@ -26,7 +26,8 @@ class CloudVar {
                 return target._rawVars[key];
             },
             set: (target, key, value) => {
-                if (typeof key === 'string' && (key.startsWith('_') || key in target)) {
+                // クラス自体の既存プロパティ（_rawVars等）以外はすべて同期エンジンへ
+                if (typeof key === 'string' && key in target && !key.startsWith('_')) {
                     target[key] = value; return true;
                 }
                 if (typeof key === 'string') target._linkToGlobal(key);

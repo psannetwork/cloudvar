@@ -26,9 +26,9 @@
             </div>
             <div class="row">
                 <input type="text" cv-local="msg" placeholder="メッセージを入力..." 
-                       cv-on="submit: chatLog += nickname + ': ' + msg + '\\n'; msg = ''">
+                       cv-on="submit: chatLog += nickname + ': ' + msg + BR; msg = ''">
                 <button type="button" 
-                        cv-on="click: chatLog += nickname + ': ' + msg + '\\n'; msg = ''">送信</button>
+                        cv-on="click: chatLog += nickname + ': ' + msg + BR; msg = ''">送信</button>
             </div>
         </div>
     </div>

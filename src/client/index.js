@@ -20,7 +20,6 @@ class CloudVar {
 
         return new Proxy(this, {
             get: (target, key) => {
-                // 🌟 システム仮想変数の提供
                 if (key === 'ID') return target.id || '';
                 if (key === 'ROOM') return target.roomId || '';
                 if (key === 'COUNT') return target.clientList.length;
@@ -81,7 +80,6 @@ class CloudVar {
                 });
                 this._pendingSets.clear();
 
-                // 🌟 システム変数の更新を通知
                 this._emit('ID', this.id);
                 this._emit('ROOM', this.roomId);
                 this._emit('COUNT', this.clientList.length);
@@ -96,12 +94,12 @@ class CloudVar {
                 break;
             case 'client_join':
                 if (!this.clientList.includes(msg.id)) this.clientList.push(msg.id);
-                this._emit('COUNT', this.clientList.length); // 🌟 人数更新
+                this._emit('COUNT', this.clientList.length);
                 this._emit('_client_join', msg.id);
                 break;
             case 'client_leave':
                 this.clientList = this.clientList.filter(id => id !== msg.id);
-                this._emit('COUNT', this.clientList.length); // 🌟 人数更新
+                this._emit('COUNT', this.clientList.length);
                 this._emit('_client_leave', msg.id);
                 break;
         }
@@ -116,7 +114,7 @@ class CloudVar {
             const setter = (val) => this._set(key, val);
             setter._isCloudVar = true;
             Object.defineProperty(window, key, {
-                get: () => this[key], // 🌟 Proxy経由で取得
+                get: () => this[key],
                 set: setter,
                 configurable: true,
                 enumerable: true
@@ -166,5 +164,6 @@ class CloudVar {
     }
 }
 
-if (typeof module !== 'undefined' && module.exports) module.exports = CloudVar;
-if (typeof window !== 'undefined') window.CloudVar = CloudVar;
+if (typeof window !== 'undefined') {
+    window.CloudVar = CloudVar;
+}

@@ -20,14 +20,12 @@ class Network {
     }
 
     setupWebRTC() {
-        // P2P (WebRTC) Mesh Network のセットアップ (将来的な拡張)
-        // 信号のやり取りには依然として WebSocket を使用する
         console.log('[INFO] P2P Mode enabled. WebRTC mesh setup in progress...');
     }
 
-        handleMessage(msg) {
-            if (msg.sender && this.sdk.blockList && this.sdk.blockList.has(msg.sender)) return;
-        // WebRTC 信号メッセージの処理
+    handleMessage(msg) {
+        if (msg.sender && this.sdk.blockList && this.sdk.blockList.has(msg.sender)) return;
+
         if (msg.type === 'rtc_signal') {
             this.handleRTCSignal(msg);
             return;
@@ -37,17 +35,14 @@ class Network {
     }
 
     handleRTCSignal(msg) {
-        // WebRTC 信号処理ロジック
     }
 
     send(data) {
-        // P2Pモードが有効で、かつピアが接続されている場合はP2P経由で送る
         if (this.mode === 'p2p' && this.peers.size > 0 && data.type === 'set') {
             this.broadcastP2P(data);
             return;
         }
 
-        // 基本は WebSocket 経由で送信
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             this.ws.send(JSON.stringify(data));
         }
@@ -63,9 +58,6 @@ class Network {
     }
 }
 
-if (typeof module !== 'undefined') {
-    module.exports = Network;
-}
 if (typeof window !== 'undefined') {
     window.CloudVarNetwork = Network;
 }

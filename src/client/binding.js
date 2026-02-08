@@ -58,7 +58,6 @@ class Binding {
     evaluate(expr) {
         if (!expr) return;
 
-        // 命令チップの処理 (ALERT, LOG, UNSYNC)
         if (expr.startsWith('ALERT(') && expr.endsWith(')')) {
             alert(this.resolveValue(expr.slice(6, -1)));
             return;
@@ -72,7 +71,6 @@ class Binding {
             return;
         }
 
-        // key += value
         if (expr.includes('+=')) {
             const [key, valExpr] = expr.split('+=').map(s => s.trim());
             const val = this.resolveValue(valExpr);
@@ -81,14 +79,12 @@ class Binding {
             return;
         }
 
-        // key = value
         if (expr.includes('=')) {
             const [key, valExpr] = expr.split('=').map(s => s.trim());
             this._setValue(key, this.resolveValue(valExpr));
             return;
         }
 
-        // ++ / -- / !
         if (expr.endsWith('++')) {
             const key = expr.slice(0, -2).trim();
             const current = this.sdk._rawVars ? this.sdk._rawVars[key] : this.sdk[key];
@@ -113,7 +109,6 @@ class Binding {
         if (!valExpr) return "";
         valExpr = valExpr.trim();
 
-        // 🌟 マジック・チップ (予約語)
         switch(valExpr) {
             case 'BR': return '\n';
             case 'ID': return this.sdk.id || '';
@@ -126,20 +121,16 @@ class Binding {
             case 'NULL': return null;
         }
         
-        // 文字列の足し算
         if (valExpr.includes('+')) {
             return valExpr.split('+').map(part => this.resolveValue(part.trim())).join('');
         }
 
-        // 文字列定数
         if (/^['"].*['"]$/.test(valExpr)) {
             return valExpr.replace(/^['"]|['"]$/g, '').replace(/\\n/g, '\n');
         }
-        // 数値
         if (!isNaN(Number(valExpr)) && valExpr !== '') {
             return Number(valExpr);
         }
-        // 他の変数名
         const val = this.sdk._rawVars ? this.sdk._rawVars[valExpr] : this.sdk[valExpr];
         return val !== undefined ? val : "";
     }
@@ -179,5 +170,6 @@ class Binding {
     }
 }
 
-if (typeof module !== 'undefined') module.exports = Binding;
-if (typeof window !== 'undefined') window.CloudVarBinding = Binding;
+if (typeof window !== 'undefined') {
+    window.CloudVarBinding = Binding;
+}

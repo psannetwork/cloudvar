@@ -17,9 +17,28 @@ CloudVarの `cv-on` 属性内で使用できる「式評価エンジン」の完
 - **論理反転 (`!`)**: `isOpen = !isOpen` (トグル処理に最適)
 - **文字列結合 (`+`)**: `'Level: ' + currentLevel`
 
-### 特殊キーワード `BR`
-HTML属性内では改行コード (`
-`) が正しく扱われないことが多いため、CloudVar専用のキーワード `BR` を用意しています。これは評価時に自動的に実際の改行文字に変換されます。
+### 特殊キーワード (マジック・チップ)
+属性内で変数のように使える予約語です。
+
+| チップ | 説明 | 例 |
+|:---|:---|:---|
+| `BR` | 改行コード (`\n`) | `msg += 'Hi' + BR` |
+| `ID` | 自分のクライアントID | `log += ID + ' joined' + BR` |
+| `ROOM` | 現在のルーム名 | `title = 'Room: ' + ROOM` |
+| `TIME` | 現在のタイムスタンプ | `lastUpdated = TIME` |
+| `RAND` | 0〜1のランダムな数値 | `dice = RAND` |
+| `COUNT` | 現在の接続人数 | `stats = COUNT + ' people online'` |
+| `TRUE` / `FALSE` | 真偽値 | `isOpen = TRUE` |
+
+### 命令チップ (Function Chips)
+特定の動作を実行するための関数のようなチップです。
+
+- **`ALERT(msg)`**: アラートを表示します。
+  - `cv-on="click: ALERT('Hello ' + nickname)"`
+- **`LOG(msg)`**: コンソールにログを出力します。
+  - `cv-on="click: LOG('Debug: ' + score)"`
+- **`UNSYNC(varName)`**: 指定した変数の同期を解除します。
+  - `cv-on="click: UNSYNC('secretData')"`
 
 ## 状態による表示の制御 (Reactive UI)
 

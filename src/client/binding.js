@@ -58,7 +58,21 @@ class Binding {
     evaluate(expr) {
         if (!expr) return;
 
-        // key += value (追記)
+        // 命令チップの処理 (ALERT, LOG, UNSYNC)
+        if (expr.startsWith('ALERT(') && expr.endsWith(')')) {
+            alert(this.resolveValue(expr.slice(6, -1)));
+            return;
+        }
+        if (expr.startsWith('LOG(') && expr.endsWith(')')) {
+            console.log('[CloudVar]', this.resolveValue(expr.slice(4, -1)));
+            return;
+        }
+        if (expr.startsWith('UNSYNC(') && expr.endsWith(')')) {
+            this.sdk.unSync(expr.slice(7, -1).trim());
+            return;
+        }
+
+        // key += value
         if (expr.includes('+=')) {
             const [key, valExpr] = expr.split('+=').map(s => s.trim());
             const val = this.resolveValue(valExpr);
@@ -67,14 +81,14 @@ class Binding {
             return;
         }
 
-        // key = value (代入)
+        // key = value
         if (expr.includes('=')) {
             const [key, valExpr] = expr.split('=').map(s => s.trim());
             this._setValue(key, this.resolveValue(valExpr));
             return;
         }
 
-        // ++ / --
+        // ++ / -- / !
         if (expr.endsWith('++')) {
             const key = expr.slice(0, -2).trim();
             const current = this.sdk._rawVars ? this.sdk._rawVars[key] : this.sdk[key];
@@ -91,19 +105,27 @@ class Binding {
     }
 
     _setValue(key, value) {
-        if (this.sdk._set) {
-            this.sdk._set(key, value);
-        } else {
-            this.sdk[key] = value;
-        }
+        if (this.sdk._set) this.sdk._set(key, value);
+        else this.sdk[key] = value;
     }
 
     resolveValue(valExpr) {
         if (!valExpr) return "";
-        
-        // 🌟 改行の別名 'BR' をサポート
-        if (valExpr === 'BR') return '\n';
+        valExpr = valExpr.trim();
 
+        // 🌟 マジック・チップ (予約語)
+        switch(valExpr) {
+            case 'BR': return '\n';
+            case 'ID': return this.sdk.id || '';
+            case 'ROOM': return this.sdk.roomId || '';
+            case 'TIME': return Date.now();
+            case 'RAND': return Math.random();
+            case 'COUNT': return this.sdk.clientList.length;
+            case 'TRUE': return true;
+            case 'FALSE': return false;
+            case 'NULL': return null;
+        }
+        
         // 文字列の足し算
         if (valExpr.includes('+')) {
             return valExpr.split('+').map(part => this.resolveValue(part.trim())).join('');
@@ -157,9 +179,5 @@ class Binding {
     }
 }
 
-if (typeof module !== 'undefined') {
-    module.exports = Binding;
-}
-if (typeof window !== 'undefined') {
-    window.CloudVarBinding = Binding;
-}
+if (typeof module !== 'undefined') module.exports = Binding;
+if (typeof window !== 'undefined') window.CloudVarBinding = Binding;

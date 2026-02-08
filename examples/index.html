@@ -2,58 +2,32 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>CloudVar Simple Chat</title>
+    <title>CloudVar Examples</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
-        .chat-container { width: 100%; max-width: 500px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: 80vh; }
-        .header { padding: 15px; border-bottom: 1px solid #eee; font-weight: bold; background: #3b82f6; color: white; border-radius: 8px 8px 0 0; }
-        .messages { flex: 1; padding: 15px; overflow-y: auto; white-space: pre-wrap; font-size: 0.9em; line-height: 1.5; background: #fafafa; }
-        .input-area { padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; flex-direction: column; }
-        .row { display: flex; gap: 10px; }
-        input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; outline: none; }
-        button { padding: 8px 15px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        button:hover { background: #2563eb; }
-        .nickname-box { font-size: 0.8em; color: #666; margin-bottom: 5px; }
+        body { font-family: sans-serif; padding: 50px; line-height: 1.6; max-width: 800px; margin: auto; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 30px; }
+        .card { border: 1px solid #ddd; padding: 20px; border-radius: 8px; text-decoration: none; color: #333; transition: transform 0.2s; }
+        .card:hover { transform: translateY(-5px); border-color: #3b82f6; }
+        .card h3 { margin-top: 0; color: #3b82f6; }
     </style>
 </head>
 <body>
+    <h1>☁️ CloudVar サンプル集</h1>
+    <p>ソースコードを右クリックで確認してみてください。JavaScriptがほとんど書かれていないことに驚くはずです。</p>
 
-    <div class="chat-container">
-        <div class="header">☁️ CloudVar Realtime Chat</div>
-        
-        <!-- チャットログの表示 -->
-        <div class="messages" cv-bind="chatLog"></div>
-
-        <div class="input-area">
-            <div class="nickname-box">
-                名前: <input type="text" cv-local="nickname" style="flex: none; width: 100px;" placeholder="なまえ">
-            </div>
-            <div class="row">
-                <input type="text" cv-local="msg" placeholder="メッセージを入力..." 
-                       cv-on="submit: chatLog += nickname + ': ' + msg + '\n'; msg = ''">
-                <button type="button" 
-                        cv-on="click: chatLog += nickname + ': ' + msg + '\n'; msg = ''">送信</button>
-            </div>
-        </div>
+    <div class="grid">
+        <a href="chat/index.html" class="card">
+            <h3>💬 リアルタイムチャット</h3>
+            <p>マジック属性だけで作られた、世界と繋がるチャットルーム。</p>
+        </a>
+        <a href="game/index.html" class="card">
+            <h3>🎮 クリッカーゲーム</h3>
+            <p>全員で1つの数値を増やす、シンプルで熱いクリックバトル。</p>
+        </a>
+        <a href="todo/index.html" class="card">
+            <h3>📝 共有ToDoリスト</h3>
+            <p>文字列結合 (+=) を使った、チームで使えるリストアプリ。</p>
+        </a>
     </div>
-
-    <script src="https://github.com/psannetwork/cloudvar/releases/download/V2.0/cloudvar.js"></script>
-    <script>
-        const cv = new CloudVar('ws://localhost:5032', { room: 'chat-room' });
-
-        // 自動スクロール
-        cv.onChange('chatLog', () => {
-            const el = document.querySelector('.messages');
-            el.scrollTop = el.scrollHeight;
-        });
-
-        // 🌟 HTMLにある変数は、この時点で定義済み。
-        // 未定義チェック(typeof)をしてから初期値を代入。
-        if (typeof nickname === 'undefined' || nickname === null) nickname = "ゲスト" + Math.floor(Math.random() * 1000);
-        if (typeof chatLog === 'undefined' || chatLog === null) chatLog = "--- チャットへようこそ ---\n";
-        
-        // メッセージ入力欄も空で初期化
-        msg = "";
-    </script>
 </body>
 </html>

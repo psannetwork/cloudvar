@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>CloudVar - Clicker Hero</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #1a1a1a; color: white; padding-top: 50px; }
+        .counter { font-size: 5em; font-weight: bold; color: #ffeb3b; margin: 20px; }
+        .btn { padding: 20px 40px; font-size: 1.5em; cursor: pointer; background: #f44336; border: none; border-radius: 50px; color: white; box-shadow: 0 5px #b71c1c; }
+        .btn:active { box-shadow: 0 2px #b71c1c; transform: translateY(3px); }
+        .status { margin-top: 30px; color: #aaa; }
+    </style>
+</head>
+<body>
+    <h1>みんなでクリック！</h1>
+    <div class="counter" cv-bind="totalClicks">0</div>
+    <button class="btn" cv-on="click: totalClicks++">PUSH!</button>
+    <div class="status">
+        接続中のヒーロー: <span cv-bind="_clientCount">0</span>人
+    </div>
+
+    <script src="https://github.com/psannetwork/cloudvar/releases/download/V2.0/cloudvar.js"></script>
+    <script>
+        const cv = new CloudVar('ws://localhost:5032', { room: 'clicker-game' });
+        totalClicks = totalClicks || 0;
+        
+        // クライアント数の監視
+        cv.onChange('_client_join', () => _clientCount = cv.clientList.length);
+        cv.onChange('_client_leave', () => _clientCount = cv.clientList.length);
+    </script>
+</body>
+</html>

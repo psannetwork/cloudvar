@@ -1,27 +1,32 @@
 # サーバー設定ガイド
 
-`src/config.js` を書き換えることでサーバーの挙動をカスタマイズできます。
+CloudVar Serverは、単体起動とライブラリ組み込みの両方に対応しています。
 
-## 起動方法
-サーバーのメインエントリは `src/server/index.js` です。
+## 単体起動 (CLI)
 ```bash
-npm start
-# または
-node src/server/index.js
+npm install -g cloudvar
+cloudvar-server --port 5032
 ```
 
-## 主要な項目
-- `port`: サーバーが待機するポート。
-- `token`: サーバー全体の接続パスワード。
-- `redis`: RedisサーバーのURL。設定すると複数サーバー間で同期します。
-- `roomExpirationMs`: ルームが空になってから、データがメモリから削除されるまでの時間（ミリ秒）。
-- `rateLimitMs`: 同一ユーザーからの送信間隔（ミリ秒）。連投による負荷を抑えます。
-- `maxVariableSize`: 1つの変数に入れられるデータの最大サイズ（バイト）。
+## ライブラリとして使用 (Node.js)
+```javascript
+const CloudVarServer = require('cloudvar');
 
-## 環境変数
-`.env` ファイルを作成して上書きすることも可能です。
-```env
-PORT=9000
-TOKEN=my-secure-token
-REDIS_URL=redis://localhost:6379
+const server = new CloudVarServer({
+  port: 5032,
+  // 既存のhttpサーバーを利用する場合
+  // server: myHttpServer 
+});
+
+server.start();
 ```
+
+## 設定項目 (src/config.js)
+| 項目 | デフォルト | 説明 |
+|:---|:---|:---|
+| `port` | 5032 | 待ち受けポート |
+| `roomExpirationMs` | 300,000 | 誰もいなくなった部屋を消すまでの時間(5分) |
+| `maxPayloadSize` | 1024 | 1つの変数の最大サイズ(1KB) |
+
+## Redisによるスケーリング
+`config.js` にRedisのURLを記述することで、複数のサーバー間でデータを同期させることが可能です（将来対応予定）。

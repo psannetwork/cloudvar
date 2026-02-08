@@ -1,15 +1,40 @@
-# CloudVar ☁️ 総合ドキュメント
+# 📖 CloudVar ドキュメント
 
-CloudVarは、**「コードを一行も書かずにリアルタイム同期」**を目指した、最も直感的な変数同期システムです。
+CloudVarは、一切のコードを書かずにリアルタイム体験を作るためのフレームワークです。
 
-## 📂 プロジェクト構造
-- **src/client/**: クライアントSDKのソース（Network, Binding, Coreに分割）。
-- **src/server/**: サーバーサイドのソース（Room管理, SyncEngineに分割）。
-- **src/utils/**: サーバー・クライアント共通のユーティリティ。
-- **src/client.bundle.js**: ブラウザで1ファイル読み込むだけで使える統合版。
+## 🧭 ガイド
+1. [クイックスタート](./guide/getting-started.md) - 5分でチャットを作る
+2. [マジック属性の使い方](./guide/auto-bind.md) - 属性による「魔法」の詳細
+3. [ルームとデータ分離](./guide/rooms.md) - 部屋の概念とデータの独立性
+4. [P2PとWebSocket](./guide/getting-started.md#⚡️-同期モードの切り替え) - 通信モードの選択
 
-## 📚 クイックリンク
-- **[導入ガイド (5分)](./guide/getting-started.md)**: `client.bundle.js` を使った最速の導入。
-- **[APIリファレンス](./api/client-sdk.md)**: メソッドやプロパティの一覧。
-- **[オートバインド詳細](./guide/auto-bind.md)**: HTMLと変数を繋ぐ仕組み。
-- **[サーバー設定](./api/server-config.md)**: 自分のサーバーをカスタマイズ。
+## 🛠 APIリファレンス
+- [Client SDK API](./api/client-sdk.md) - JSからの操作
+- [Server Config](./api/server-config.md) - サーバーの設定と構築
+
+## 💡 逆引きレシピ
+
+### 特定のイベントで音を鳴らしたい
+```javascript
+cv.onChange('score', () => new Audio('pop.mp3').play());
+```
+
+### 自分だけに表示する「入力中...」を作りたい
+`cv-local` 属性を使います。
+```html
+<input type="text" cv-local="typing">
+<p cv-show="typing">入力しています...</p>
+```
+
+### 配列のようにデータを扱いたい
+現在のCloudVarは文字列ベースの同期に最適化されています。`+=` を活用してください。
+```html
+<button cv-on="click: log += 'Action!\n'">記録</button>
+```
+
+## 🎨 デザインガイド
+CloudVarの属性はCSSと相性が抜群です。
+```html
+<div cv-class="active: is-online"></div>
+```
+このように書くことで、誰かがオンラインになった瞬間に画面上のドットを緑色にする、といった演出がCSSだけで完結します。

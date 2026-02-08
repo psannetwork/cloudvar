@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>CloudVar - Shared Todo</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f9f9f9; }
+        .card { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        ul { list-style: none; padding: 0; }
+        li { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+        .input-group { display: flex; gap: 10px; }
+        input { flex: 1; padding: 8px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>📝 チームToDo</h2>
+        <div class="messages" style="white-space: pre-wrap; margin-bottom: 20px;" cv-bind="todoList"></div>
+        
+        <div class="input-group">
+            <input type="text" cv-local="newItem" placeholder="新しいタスク...">
+            <button cv-on="click: todoList += '・' + newItem + '
+'; newItem = ''">追加</button>
+        </div>
+        <button style="margin-top: 10px; width: 100%;" cv-on="click: todoList = ''">全てクリア</button>
+    </div>
+
+    <script src="https://github.com/psannetwork/cloudvar/releases/download/V2.0/cloudvar.js"></script>
+    <script>
+        const cv = new CloudVar('ws://localhost:5032', { room: 'shared-todo' });
+        todoList = todoList || "・サーバーを立てる
+";
+    </script>
+</body>
+</html>

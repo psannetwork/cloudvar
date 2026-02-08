@@ -39,8 +39,10 @@
             const el = document.querySelector('.messages');
             el.scrollTop = el.scrollHeight;
         });
-        if (typeof nickname === 'undefined' || nickname === null) nickname = "ゲスト" + Math.floor(Math.random() * 1000);
-        if (typeof chatLog === 'undefined' || chatLog === null) chatLog = "--- チャットへようこそ ---\n";
+        
+        // 🌟 初期化
+        nickname = "ゲスト" + Math.floor(Math.random() * 1000);
+        chatLog = chatLog || "--- チャットへようこそ ---\n";
         msg = "";
     </script>
 </body>

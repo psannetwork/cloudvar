@@ -16,18 +16,13 @@
     <div class="counter" cv-bind="totalClicks">0</div>
     <button class="btn" cv-on="click: totalClicks++">PUSH!</button>
     <div class="status">
-        接続中のヒーロー: <span cv-local="heroCount">1</span>人
+        接続中のヒーロー: <span cv-bind="COUNT">0</span>人
     </div>
 
     <script src="../cloudvar.js"></script>
     <script>
         const cv = new CloudVar('wss://cloudvar.psannetwork.net', { room: 'clicker-game' });
         totalClicks = totalClicks || 0;
-        heroCount = 1;
-        
-        cv.onChange('_joined', () => heroCount = cv.clientList.length);
-        cv.onChange('_client_join', () => heroCount = cv.clientList.length);
-        cv.onChange('_client_leave', () => heroCount = cv.clientList.length);
     </script>
 </body>
 </html>

@@ -17,8 +17,8 @@
     
     <div class="dashboard">
         <!-- JSでの代入なしに、これだけで自動更新される -->
-        <div><span class="label">MY_ID:</span> <span cv-bind="ID">...</span></div>
-        <div><span class="label">ROOM:</span> <span cv-bind="ROOM">...</span></div>
+        <div><span class="label">MY_ID:</span> <span cv-bind="ID">Connecting...</span></div>
+        <div><span class="label">ROOM:</span> <span cv-bind="ROOM">Connecting...</span></div>
         <div><span class="label">ONLINE:</span> <span cv-bind="COUNT">0</span> 人が接続中</div>
     </div>
 
@@ -38,7 +38,9 @@
     <script>
         // 🌟 JavaScript は接続するだけ。更新ロジックは 1 行も書かない。
         const cv = new CloudVar('wss://cloudvar.psannetwork.net', { room: 'logicless-demo' });
-        systemLog = systemLog || "--- SYSTEM READY ---" + BR;
+        
+        // 初期値の設定（undefined回避）
+        systemLog = "--- SYSTEM READY ---" + BR;
     </script>
 </body>
 </html>

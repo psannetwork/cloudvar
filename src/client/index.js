@@ -1,7 +1,7 @@
 class CloudVar {
     constructor(url = 'wss://cloudvar.psannetwork.net', options = {}) {
         this.config = { url, token: options.token || 'default', mode: options.mode || 'ws', room: options.room || null };
-        this.name = options.name || null; // 🌟 インスタンス名
+        this.name = options.name || null;
         this.id = null;
         this.roomId = this.config.room;
         this.joined = false;
@@ -17,7 +17,12 @@ class CloudVar {
         this._binding = new CloudVarBinding(this);
 
         this._network.connect();
-        this._scanAndLink();
+        
+        // 🌟 初期化を確実にする
+        if (typeof document !== 'undefined') {
+            if (document.readyState === 'complete') this._scanAndLink();
+            else window.addEventListener('DOMContentLoaded', () => this._scanAndLink());
+        }
 
         return new Proxy(this, {
             get: (target, key) => {
@@ -32,7 +37,6 @@ class CloudVar {
                 if (typeof key === 'string' && key in target && !key.startsWith('_')) {
                     target[key] = value; return true;
                 }
-                // 名前がない（デフォルト）インスタンスのみ、グローバルに紐付ける
                 if (typeof key === 'string' && !this.name) target._linkToGlobal(key);
                 target._set(key, value);
                 return true;
@@ -160,8 +164,12 @@ class CloudVar {
 
         foundVars.forEach(varName => {
             if (!this.name) this._linkToGlobal(varName);
-            if (this._rawVars[varName] === undefined && !['ID','COUNT','ROOM','TIME','RAND'].includes(varName)) {
-                this._rawVars[varName] = undefined;
+            // 🌟 ID, COUNT などのシステム変数や undefined の変数を安全に初期化
+            if (['ID','ROOM'].includes(varName)) return; // これらはgetterで返すのでrawVarsには入れない
+            if (['COUNT','TIME','RAND'].includes(varName)) return;
+
+            if (this._rawVars[varName] === undefined) {
+                this._rawVars[varName] = ""; // undefined ではなく空文字で初期化
             }
         });
     }

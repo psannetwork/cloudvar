@@ -1,5 +1,5 @@
 class CloudVar {
-    constructor(url, options = {}) {
+    constructor(url = 'wss://cloudvar.psannetwork.net', options = {}) {
         this.config = { url, token: options.token || 'default', mode: options.mode || 'ws', room: options.room || null };
         this.id = null;
         this.roomId = this.config.room;

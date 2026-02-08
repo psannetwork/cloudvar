@@ -12,8 +12,9 @@ class CloudVar {
         this._pendingSets = new Map();
         this._listeners = new Map();
 
-        this._network = new (typeof CloudVarNetwork !== 'undefined' ? CloudVarNetwork : null)(this);
-        this._binding = new (typeof CloudVarBinding !== 'undefined' ? CloudVarBinding : null)(this);
+        // 各インスタンスごとに独自のネットワークとバインディングを持つ
+        this._network = new CloudVarNetwork(this);
+        this._binding = new CloudVarBinding(this);
 
         this._network.connect();
         this._scanAndLink();
@@ -93,9 +94,11 @@ class CloudVar {
                 this._emit('*', msg.value, msg.key);
                 break;
             case 'client_join':
-                if (!this.clientList.includes(msg.id)) this.clientList.push(msg.id);
-                this._emit('COUNT', this.clientList.length);
-                this._emit('_client_join', msg.id);
+                if (!this.clientList.includes(msg.id)) {
+                    this.clientList.push(msg.id);
+                    this._emit('COUNT', this.clientList.length);
+                    this._emit('_client_join', msg.id);
+                }
                 break;
             case 'client_leave':
                 this.clientList = this.clientList.filter(id => id !== msg.id);
@@ -110,12 +113,11 @@ class CloudVar {
         try {
             const desc = Object.getOwnPropertyDescriptor(window, key);
             if (desc && !desc.configurable) return;
-            if (desc && desc.set && desc.set._isCloudVar) return;
-            const setter = (val) => this._set(key, val);
-            setter._isCloudVar = true;
+            
+            // 🌟 最後に作られたインスタンスのアクセサで上書きする（複数インスタンス対応）
             Object.defineProperty(window, key, {
                 get: () => this[key],
-                set: setter,
+                set: (val) => this._set(key, val),
                 configurable: true,
                 enumerable: true
             });

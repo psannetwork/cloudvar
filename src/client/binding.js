@@ -7,6 +7,7 @@ class Binding {
     setup() {
         if (typeof document === 'undefined') return;
 
+        // このインスタンスでの変更をDOMに反映
         this.sdk.onChange('*', (key, value) => {
             this.updateAll(key, value);
         });
@@ -14,6 +15,7 @@ class Binding {
         document.addEventListener('input', (e) => {
             const key = e.target.getAttribute('cv-bind') || e.target.getAttribute('cv-local');
             if (key) {
+                // 最後に操作された入力欄に紐づくインスタンスが値をセットする
                 if (this.sdk._set) this.sdk._set(key, e.target.value);
                 else this.sdk[key] = e.target.value;
             }
@@ -22,7 +24,9 @@ class Binding {
         document.addEventListener('click', (e) => this.handleEvent(e, 'click'));
         document.addEventListener('submit', (e) => this.handleEvent(e, 'submit'), true);
 
-        window.addEventListener('DOMContentLoaded', () => this.scan());
+        // 初回スキャン
+        if (document.readyState === 'complete') this.scan();
+        else window.addEventListener('DOMContentLoaded', () => this.scan());
     }
 
     handleEvent(e, eventName) {
@@ -74,7 +78,7 @@ class Binding {
         if (expr.includes('+=')) {
             const [key, valExpr] = expr.split('+=').map(s => s.trim());
             const val = this.resolveValue(valExpr);
-            const current = this.sdk._rawVars ? this.sdk._rawVars[key] : this.sdk[key];
+            const current = this.sdk[key];
             this._setValue(key, (current || "") + val);
             return;
         }
@@ -87,15 +91,15 @@ class Binding {
 
         if (expr.endsWith('++')) {
             const key = expr.slice(0, -2).trim();
-            const current = this.sdk._rawVars ? this.sdk._rawVars[key] : this.sdk[key];
+            const current = this.sdk[key];
             this._setValue(key, (Number(current) || 0) + 1);
         } else if (expr.endsWith('--')) {
             const key = expr.slice(0, -2).trim();
-            const current = this.sdk._rawVars ? this.sdk._rawVars[key] : this.sdk[key];
+            const current = this.sdk[key];
             this._setValue(key, (Number(current) || 0) - 1);
         } else if (expr.startsWith('!')) {
             const key = expr.slice(1).trim();
-            const current = this.sdk._rawVars ? this.sdk._rawVars[key] : this.sdk[key];
+            const current = this.sdk[key];
             this._setValue(key, !current);
         }
     }
@@ -111,11 +115,11 @@ class Binding {
 
         switch(valExpr) {
             case 'BR': return '\n';
-            case 'ID': return this.sdk.id || '';
-            case 'ROOM': return this.sdk.roomId || '';
+            case 'ID': return this.sdk.ID;
+            case 'ROOM': return this.sdk.ROOM;
             case 'TIME': return Date.now();
             case 'RAND': return Math.random();
-            case 'COUNT': return this.sdk.clientList.length;
+            case 'COUNT': return this.sdk.COUNT;
             case 'TRUE': return true;
             case 'FALSE': return false;
             case 'NULL': return null;
@@ -131,13 +135,17 @@ class Binding {
         if (!isNaN(Number(valExpr)) && valExpr !== '') {
             return Number(valExpr);
         }
-        const val = this.sdk._rawVars ? this.sdk._rawVars[valExpr] : this.sdk[valExpr];
+        const val = this.sdk[valExpr];
         return val !== undefined ? val : "";
     }
 
     scan() {
         const vars = this.sdk._rawVars || {};
         Object.keys(vars).forEach(key => this.updateAll(key, vars[key]));
+        // システム変数の初期反映
+        this.updateAll('ID', this.sdk.ID);
+        this.updateAll('ROOM', this.sdk.ROOM);
+        this.updateAll('COUNT', this.sdk.COUNT);
     }
 
     updateAll(key, value) {

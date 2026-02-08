@@ -5,14 +5,13 @@ class CloudVar {
         this.roomId = this.config.room;
         this.joined = false;
         this.clientList = [];
-        this.blockList = new Set(); // 🌟 確実に初期化
+        this.blockList = new Set();
         
         this._rawVars = {};
         this._localVars = new Set();
         this._pendingSets = new Map();
         this._listeners = new Map();
 
-        // モジュール初期化
         this._network = new (typeof CloudVarNetwork !== 'undefined' ? CloudVarNetwork : null)(this);
         this._binding = new (typeof CloudVarBinding !== 'undefined' ? CloudVarBinding : null)(this);
 
@@ -21,12 +20,16 @@ class CloudVar {
 
         return new Proxy(this, {
             get: (target, key) => {
+                // 🌟 システム仮想変数の提供
+                if (key === 'ID') return target.id || '';
+                if (key === 'ROOM') return target.roomId || '';
+                if (key === 'COUNT') return target.clientList.length;
                 if (key === 'varList') return target.varList;
+
                 if (key in target || typeof key === 'symbol') return target[key];
                 return target._rawVars[key];
             },
             set: (target, key, value) => {
-                // クラス自体の既存プロパティ（_rawVars等）以外はすべて同期エンジンへ
                 if (typeof key === 'string' && key in target && !key.startsWith('_')) {
                     target[key] = value; return true;
                 }
@@ -52,15 +55,10 @@ class CloudVar {
 
     _set(key, value) {
         if (this._rawVars[key] === value) return;
-
         if (!this._localVars.has(key)) {
-            if (!this.joined) {
-                this._pendingSets.set(key, value);
-            } else {
-                this._network.send({ type: 'set', key, value, roomId: this.roomId });
-            }
+            if (!this.joined) this._pendingSets.set(key, value);
+            else this._network.send({ type: 'set', key, value, roomId: this.roomId });
         }
-
         this._rawVars[key] = value;
         this._emit(key, value);
         this._emit('*', value, key);
@@ -72,19 +70,21 @@ class CloudVar {
                 this.joined = true;
                 this.id = msg.id;
                 this.clientList = msg.clients;
-
                 Object.entries(msg.data).forEach(([k, v]) => {
                     this._rawVars[k] = v;
                     this._linkToGlobal(k);
                     this._pendingSets.delete(k);
                     this._emit(k, v);
                 });
-
                 this._pendingSets.forEach((value, key) => {
                     this._network.send({ type: 'set', key, value, roomId: this.roomId });
                 });
                 this._pendingSets.clear();
 
+                // 🌟 システム変数の更新を通知
+                this._emit('ID', this.id);
+                this._emit('ROOM', this.roomId);
+                this._emit('COUNT', this.clientList.length);
                 this._emit('_joined', msg.roomId);
                 break;
             case 'update':
@@ -96,10 +96,12 @@ class CloudVar {
                 break;
             case 'client_join':
                 if (!this.clientList.includes(msg.id)) this.clientList.push(msg.id);
+                this._emit('COUNT', this.clientList.length); // 🌟 人数更新
                 this._emit('_client_join', msg.id);
                 break;
             case 'client_leave':
                 this.clientList = this.clientList.filter(id => id !== msg.id);
+                this._emit('COUNT', this.clientList.length); // 🌟 人数更新
                 this._emit('_client_leave', msg.id);
                 break;
         }
@@ -111,12 +113,10 @@ class CloudVar {
             const desc = Object.getOwnPropertyDescriptor(window, key);
             if (desc && !desc.configurable) return;
             if (desc && desc.set && desc.set._isCloudVar) return;
-
             const setter = (val) => this._set(key, val);
             setter._isCloudVar = true;
-
             Object.defineProperty(window, key, {
-                get: () => this._rawVars[key],
+                get: () => this[key], // 🌟 Proxy経由で取得
                 set: setter,
                 configurable: true,
                 enumerable: true
@@ -159,14 +159,12 @@ class CloudVar {
 
         foundVars.forEach(varName => {
             this._linkToGlobal(varName);
-            if (this._rawVars[varName] === undefined) this._rawVars[varName] = undefined;
+            if (this._rawVars[varName] === undefined && !['ID','COUNT','ROOM','TIME','RAND'].includes(varName)) {
+                this._rawVars[varName] = undefined;
+            }
         });
     }
 }
 
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = CloudVar;
-}
-if (typeof window !== 'undefined') {
-    window.CloudVar = CloudVar;
-}
+if (typeof module !== 'undefined' && module.exports) module.exports = CloudVar;
+if (typeof window !== 'undefined') window.CloudVar = CloudVar;

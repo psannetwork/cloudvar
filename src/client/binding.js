@@ -108,7 +108,7 @@ class Binding {
 
         // 文字列定数
         if (/^['"].*['"]$/.test(valExpr)) {
-            return valExpr.replace(/^['"]|['"]$/g, '');
+            return valExpr.replace(/^['"]|['"]$/g, '').replace(/\\n/g, '\n');
         }
         // 数値
         if (!isNaN(Number(valExpr)) && valExpr !== '') {

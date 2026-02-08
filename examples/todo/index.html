@@ -6,8 +6,7 @@
     <style>
         body { font-family: sans-serif; padding: 20px; background: #f9f9f9; }
         .card { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        ul { list-style: none; padding: 0; }
-        li { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+        .todo-list { white-space: pre-wrap; margin-bottom: 20px; border: 1px solid #eee; padding: 10px; min-height: 100px; }
         .input-group { display: flex; gap: 10px; }
         input { flex: 1; padding: 8px; }
     </style>
@@ -15,12 +14,11 @@
 <body>
     <div class="card">
         <h2>📝 チームToDo</h2>
-        <div class="messages" style="white-space: pre-wrap; margin-bottom: 20px;" cv-bind="todoList"></div>
+        <div class="todo-list" cv-bind="todoList"></div>
         
         <div class="input-group">
             <input type="text" cv-local="newItem" placeholder="新しいタスク...">
-            <button cv-on="click: todoList += '・' + newItem + '
-'; newItem = ''">追加</button>
+            <button type="button" cv-on="click: todoList += '・' + newItem + '\\n'; newItem = ''">追加</button>
         </div>
         <button style="margin-top: 10px; width: 100%;" cv-on="click: todoList = ''">全てクリア</button>
     </div>
@@ -28,8 +26,10 @@
     <script src="../cloudvar.js"></script>
     <script>
         const cv = new CloudVar('wss://cloudvar.psannetwork.net', { room: 'shared-todo' });
-        todoList = todoList || "・サーバーを立てる
-";
+        // 初期値
+        setTimeout(() => {
+            if (!todoList) todoList = "・サーバーを立てる\n";
+        }, 500);
     </script>
 </body>
 </html>

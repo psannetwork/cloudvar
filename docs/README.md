@@ -5,8 +5,9 @@ CloudVarは、一切のコードを書かずにリアルタイム体験を作る
 ## 🧭 ガイド
 1. [クイックスタート](./guide/getting-started.md) - 5分でチャットを作る
 2. [マジック属性の使い方](./guide/auto-bind.md) - 属性による「魔法」の詳細
-3. [ルームとデータ分離](./guide/rooms.md) - 部屋の概念とデータの独立性
-4. [P2PとWebSocket](./guide/getting-started.md#⚡️-同期モードの切り替え) - 通信モードの選択
+3. [高度な使い方と式評価](./guide/advanced.md) - BRキーワードや複雑なロジック
+4. [ルームとデータ分離](./guide/rooms.md) - 部屋の概念とデータの独立性
+5. [P2PとWebSocket](./guide/getting-started.md#⚡️-同期モードの切り替え) - 通信モードの選択
 
 ## 🛠 APIリファレンス
 - [Client SDK API](./api/client-sdk.md) - JSからの操作

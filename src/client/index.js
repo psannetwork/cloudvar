@@ -13,32 +13,9 @@ class CloudVar {
         this._pendingSets = new Map();
         this._listeners = new Map();
 
-        this._network = new CloudVarNetwork(this);
-        this._binding = new CloudVarBinding(this);
-
-        this._network.connect();
-        
-        // 🌟 待たずに即スキャン（既にパース済みの要素を対象にする）
-        if (typeof document !== 'undefined') {
-            this._scanAndLink();
-            // 念のため完了時にもう一度（後続要素のため）
-            window.addEventListener('DOMContentLoaded', () => this._scanAndLink());
-        }
-
-        return new Proxy(this, {
-            get: (target, key) => {
-                // 🌟 システム定数・変数の提供
-                if (key === 'BR') return '\n';
-                if (key === 'TIME') return Date.now();
-                if (key === 'RAND') return Math.random();
-                if (key === 'ID') return target.id || 'connecting...';
-                if (key === 'ROOM') return target.roomId || '';
-                if (key === 'COUNT') return target.clientList.length;
-                if (key === 'varList') return target.varList;
-
-                if (key in target || typeof key === 'symbol') return target[key];
-                return target._rawVars[key] !== undefined ? target._rawVars[key] : "";
-            },
+        // 🌟 1. プロキシを先に作成（サブモジュールがプロキシ経由でアクセスできるように）
+        this._proxy = new Proxy(this, {
+            get: (target, key) => target._get(key),
             set: (target, key, value) => {
                 if (typeof key === 'string' && key in target && !key.startsWith('_')) {
                     target[key] = value; return true;
@@ -48,6 +25,37 @@ class CloudVar {
                 return true;
             }
         });
+
+        // 🌟 2. サブモジュールにはプロキシを渡す
+        this._network = new CloudVarNetwork(this._proxy);
+        this._binding = new CloudVarBinding(this._proxy);
+
+        this._network.connect();
+        
+        // 🌟 3. 即座にスキャンしてリンク（既にパース済みのDOMを対象に）
+        if (typeof document !== 'undefined') {
+            this._scanAndLink();
+            window.addEventListener('DOMContentLoaded', () => this._scanAndLink());
+        }
+
+        return this._proxy;
+    }
+
+    // 🌟 値取得の一元化（プロキシとグローバル変数の両方で使用）
+    _get(key) {
+        if (key === 'BR') return '\n';
+        if (key === 'TIME') return Date.now();
+        if (key === 'RAND') return Math.random();
+        if (key === 'ID') return this.id || 'connecting...';
+        if (key === 'ROOM') return this.roomId || '';
+        if (key === 'COUNT') return this.clientList.length;
+        if (key === 'TRUE') return true;
+        if (key === 'FALSE') return false;
+        if (key === 'NULL') return null;
+        if (key === 'varList') return this.varList;
+
+        if (key in this || typeof key === 'symbol') return this[key];
+        return this._rawVars[key] !== undefined ? this._rawVars[key] : "";
     }
 
     get varList() {
@@ -90,7 +98,9 @@ class CloudVar {
                     this._network.send({ type: 'set', key, value, roomId: this.roomId });
                 });
                 this._pendingSets.clear();
-                ['ID','ROOM','COUNT'].forEach(k => this._emit(k, this[k]));
+
+                // システム変数の更新を通知
+                ['ID','ROOM','COUNT'].forEach(k => this._emit(k, this._get(k)));
                 this._emit('_joined', msg.roomId);
                 break;
             case 'update':
@@ -120,9 +130,11 @@ class CloudVar {
         try {
             const desc = Object.getOwnPropertyDescriptor(window, key);
             if (desc && !desc.configurable) return;
+            
+            // 🌟 プロキシを介して動作させる
             Object.defineProperty(window, key, {
-                get: () => this[key],
-                set: (val) => this._set(key, val),
+                get: () => this._proxy[key],
+                set: (val) => { this._proxy[key] = val; },
                 configurable: true,
                 enumerable: true
             });
@@ -146,8 +158,8 @@ class CloudVar {
         const foundVars = new Set();
         const reserved = new Set(['true', 'false', 'null', 'undefined', 'click', 'submit', 'window', 'document', 'cv', 'CloudVar']);
 
-        // システム定数も強制的にリンク対象にする
-        ['BR', 'ID', 'ROOM', 'COUNT', 'TIME', 'RAND'].forEach(v => foundVars.add(v));
+        // システム定数もリンク対象
+        ['BR', 'ID', 'ROOM', 'COUNT', 'TIME', 'RAND', 'TRUE', 'FALSE', 'NULL'].forEach(v => foundVars.add(v));
 
         document.querySelectorAll('[cv-local]').forEach(el => {
             if (this._binding.belongsToMe(el)) {
@@ -171,7 +183,7 @@ class CloudVar {
 
         foundVars.forEach(varName => {
             if (!this.name) this._linkToGlobal(varName);
-            if (this._rawVars[varName] === undefined && !['BR','ID','COUNT','ROOM','TIME','RAND'].includes(varName)) {
+            if (this._rawVars[varName] === undefined && !['BR','ID','COUNT','ROOM','TIME','RAND','TRUE','FALSE','NULL'].includes(varName)) {
                 this._rawVars[varName] = "";
             }
         });

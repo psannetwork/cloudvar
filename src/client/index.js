@@ -100,7 +100,11 @@ class CloudVar {
                 this._pendingSets.clear();
 
                 // システム変数の更新を通知
-                ['ID','ROOM','COUNT'].forEach(k => this._emit(k, this._get(k)));
+                ['ID','ROOM','COUNT'].forEach(k => {
+                    const val = this._get(k);
+                    this._emit(k, val);
+                    this._emit('*', val, k); // 🌟 Bindingへの通知
+                });
                 this._emit('_joined', msg.roomId);
                 break;
             case 'update':
@@ -114,12 +118,14 @@ class CloudVar {
                 if (!this.clientList.includes(msg.id)) {
                     this.clientList.push(msg.id);
                     this._emit('COUNT', this.clientList.length);
+                    this._emit('*', this.clientList.length, 'COUNT'); // 🌟 Bindingへの通知
                     this._emit('_client_join', msg.id);
                 }
                 break;
             case 'client_leave':
                 this.clientList = this.clientList.filter(id => id !== msg.id);
                 this._emit('COUNT', this.clientList.length);
+                this._emit('*', this.clientList.length, 'COUNT'); // 🌟 Bindingへの通知
                 this._emit('_client_leave', msg.id);
                 break;
         }

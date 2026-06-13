@@ -1,4 +1,17 @@
+/**
+ * @typedef {Object} CloudVarOptions
+ * @property {string} [token] - The authentication token.
+ * @property {string} [mode] - The connection mode (e.g., 'ws').
+ * @property {string} [room] - The room ID to join.
+ * @property {string} [name] - The name of the client.
+ */
+
 class CloudVar {
+    /**
+     * @param {string} [url='wss://cloudvar.psannetwork.net'] - The WebSocket URL.
+     * @param {CloudVarOptions} [options={}] - Configuration options.
+     * @returns {CloudVar} A proxy instance of CloudVar.
+     */
     constructor(url = 'wss://cloudvar.psannetwork.net', options = {}) {
         this.config = { url, token: options.token || 'default', mode: options.mode || 'ws', room: options.room || null };
         this.name = options.name || null;
@@ -58,14 +71,26 @@ class CloudVar {
         return this._rawVars[key] !== undefined ? this._rawVars[key] : "";
     }
 
+    /**
+     * @returns {string[]} List of synchronized variables.
+     */
     get varList() {
         return Object.keys(this._rawVars).filter(key => !this._localVars.has(key));
     }
 
+    /**
+     * Prevents a variable from being synchronized.
+     * @param {string} key - The variable name.
+     */
     unSync(key) {
         this._localVars.add(key);
     }
 
+    /**
+     * Joins a room.
+     * @param {string} roomId - The room ID to join.
+     * @param {string} [password=null] - Optional password for the room.
+     */
     join(roomId, password = null) {
         this.roomId = roomId;
         this._network.send({ type: 'join', roomId, password, token: this.config.token });
@@ -153,6 +178,11 @@ class CloudVar {
         }
     }
 
+    /**
+     * Registers a callback for variable changes.
+     * @param {string} key - The variable name, or '*' for all changes.
+     * @param {function} callback - The callback function.
+     */
     onChange(key, callback) {
         if (!this._listeners.has(key)) this._listeners.set(key, new Set());
         this._listeners.get(key).add(callback);
